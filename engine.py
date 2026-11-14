@@ -30,11 +30,11 @@ class TradingEngine:
         self.balance = self.db.get_current_balance()
         self.risk = RiskManager(config)
         self.risk.day_start_equity = self.balance
-        self.positions = {}
+        self.positions = self.db.load_open_positions()
         self.logs = []
         self.is_running = False
         self._loop_active = False
-        self._ohlcv_cache = {}  # (symbol, timeframe) -> (fetched_at, df)
+        self._ohlcv_cache = {}
 
     def log(self, msg: str):
         ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
@@ -67,7 +67,7 @@ class TradingEngine:
         ohlcv = await self.exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
         df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
         self._ohlcv_cache[cache_key] = (now, df)
-        await asyncio.sleep(0.25)  # Gentle pacing between uncached calls
+        await asyncio.sleep(0.25)
         return df
 
     async def place_live_entry(self, symbol: str, side: str, qty: float, sl: float, tp: float):
@@ -89,6 +89,20 @@ class TradingEngine:
         )
         fill_price = float(order.get("average") or order.get("price") or 0.0)
         return formatted_qty, fill_price, formatted_sl, formatted_tp
+
+    async def update_live_stop_loss(self, symbol: str, new_sl: float):
+        if self.config.paper_trading:
+            return
+        try:
+            formatted_sl = float(self.exchange.price_to_precision(symbol, new_sl))
+            await self.exchange.private_post_v5_position_trading_stop({
+                "category": "linear",
+                "symbol": self.exchange.market_id(symbol),
+                "stopLoss": str(formatted_sl),
+                "positionIdx": 0
+            })
+        except Exception as e:
+            self.log(f"Live SL sync warning on {symbol}: {e}")
 
     async def close_live_portion(self, symbol: str, side: str, qty: float):
         close_side = "sell" if side == "LONG" else "buy"
@@ -137,12 +151,16 @@ class TradingEngine:
                     pos["sl"] = pos["entry"]
                     pos["partial_taken"] = True
                     pos["be_locked"] = True
+                    self.db.upsert_open_position(pos)
+                    await self.update_live_stop_loss(symbol, pos["sl"])
                     self.log(f"PARTIAL TP (+1.2R) | {symbol} banked ${partial_pnl:+,.2f} — Runner trailing!")
 
                 if pos["partial_taken"]:
-                    new_trail = price - (1.5 * r_dist)
+                    new_trail = round(price - (1.5 * r_dist), 4)
                     if new_trail > pos["sl"]:
-                        pos["sl"] = round(new_trail, 4)
+                        pos["sl"] = new_trail
+                        self.db.upsert_open_position(pos)
+                        await self.update_live_stop_loss(symbol, pos["sl"])
 
                 unrealized = (price - pos["entry"]) * pos["qty"]
                 hit_tp = price >= pos["tp"]
@@ -169,12 +187,16 @@ class TradingEngine:
                     pos["sl"] = pos["entry"]
                     pos["partial_taken"] = True
                     pos["be_locked"] = True
+                    self.db.upsert_open_position(pos)
+                    await self.update_live_stop_loss(symbol, pos["sl"])
                     self.log(f"PARTIAL TP (+1.2R) | {symbol} banked ${partial_pnl:+,.2f} — Runner trailing!")
 
                 if pos["partial_taken"]:
-                    new_trail = price + (1.5 * r_dist)
+                    new_trail = round(price + (1.5 * r_dist), 4)
                     if new_trail < pos["sl"]:
-                        pos["sl"] = round(new_trail, 4)
+                        pos["sl"] = new_trail
+                        self.db.upsert_open_position(pos)
+                        await self.update_live_stop_loss(symbol, pos["sl"])
 
                 unrealized = (pos["entry"] - price) * pos["qty"]
                 hit_tp = price <= pos["tp"]
@@ -208,6 +230,7 @@ class TradingEngine:
                     "closed_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
                 }
                 self.db.record_trade(closed, self.balance)
+                self.db.remove_open_position(symbol)
                 del self.positions[symbol]
                 self.log(f"CLOSED {pos['side']} {symbol} ({exit_reason}) | Net PnL: ${net_pnl:+,.2f}")
 
@@ -255,6 +278,7 @@ class TradingEngine:
                         "partial_taken": False,
                         "reason": signal.reason
                     }
+                    self.db.upsert_open_position(self.positions[symbol])
                     self.log(f"OPEN {signal.side} {symbol} @ {entry_price:.4f} | Qty: {qty} | {signal.reason}")
             except Exception as e:
                 self.log(f"Scan error on {symbol}: {e}")
@@ -272,7 +296,7 @@ class TradingEngine:
                 self.risk.day_start_equity = self.balance
 
             mode_label = "PAPER" if self.config.paper_trading else ("TESTNET" if self.config.use_testnet else "LIVE MAINNET")
-            self.log(f"AlphaStrike v4 Engine Started ({mode_label}) | Balance: ${self.balance:,.2f}")
+            self.log(f"AlphaStrike v4 Engine Started ({mode_label}) | Balance: ${self.balance:,.2f} | Restored Positions: {len(self.positions)}")
 
             while self.is_running:
                 try:
@@ -286,8 +310,9 @@ class TradingEngine:
 
     def emergency_kill(self):
         self.is_running = False
-        if not self.config.paper_trading:
-            for symbol, pos in list(self.positions.items()):
+        for symbol, pos in list(self.positions.items()):
+            if not self.config.paper_trading:
                 asyncio.create_task(self.close_live_portion(symbol, pos["side"], pos["qty"]))
+            self.db.remove_open_position(symbol)
         self.positions.clear()
         self.log("EMERGENCY KILL SWITCH ACTIVATED — Engine halted & positions flattened.")

@@ -38,6 +38,20 @@ class TradeDatabase:
                     equity REAL NOT NULL
                 )
             """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS open_positions (
+                    symbol TEXT PRIMARY KEY,
+                    side TEXT NOT NULL,
+                    entry REAL NOT NULL,
+                    sl REAL NOT NULL,
+                    tp REAL NOT NULL,
+                    qty REAL NOT NULL,
+                    risk_dist REAL NOT NULL,
+                    be_locked INTEGER NOT NULL,
+                    partial_taken INTEGER NOT NULL,
+                    reason TEXT NOT NULL
+                )
+            """)
             count = conn.execute("SELECT COUNT(*) FROM equity_curve").fetchone()[0]
             if count == 0:
                 now = datetime.now(timezone.utc).strftime("%m-%d %H:%M")
@@ -51,6 +65,47 @@ class TradeDatabase:
             row = conn.execute("SELECT SUM(pnl) AS total_pnl FROM trades").fetchone()
             total_pnl = row["total_pnl"] if row["total_pnl"] is not None else 0.0
             return round(self.initial_balance + total_pnl, 2)
+
+    def upsert_open_position(self, pos: Dict):
+        with self._connect() as conn:
+            conn.execute("""
+                INSERT INTO open_positions (symbol, side, entry, sl, tp, qty, risk_dist, be_locked, partial_taken, reason)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(symbol) DO UPDATE SET
+                    sl=excluded.sl,
+                    qty=excluded.qty,
+                    be_locked=excluded.be_locked,
+                    partial_taken=excluded.partial_taken
+            """, (
+                pos["symbol"], pos["side"], pos["entry"], pos["sl"], pos["tp"],
+                pos["qty"], pos["risk_dist"], int(pos["be_locked"]),
+                int(pos["partial_taken"]), pos["reason"]
+            ))
+
+    def remove_open_position(self, symbol: str):
+        with self._connect() as conn:
+            conn.execute("DELETE FROM open_positions WHERE symbol = ?", (symbol,))
+
+    def load_open_positions(self) -> Dict[str, Dict]:
+        with self._connect() as conn:
+            rows = conn.execute("SELECT * FROM open_positions").fetchall()
+            positions = {}
+            for r in rows:
+                positions[r["symbol"]] = {
+                    "symbol": r["symbol"],
+                    "side": r["side"],
+                    "entry": r["entry"],
+                    "current_price": r["entry"],
+                    "sl": r["sl"],
+                    "tp": r["tp"],
+                    "qty": r["qty"],
+                    "risk_dist": r["risk_dist"],
+                    "unrealized_pnl": 0.0,
+                    "be_locked": bool(r["be_locked"]),
+                    "partial_taken": bool(r["partial_taken"]),
+                    "reason": r["reason"]
+                }
+            return positions
 
     def record_trade(self, trade: Dict, new_balance: float):
         with self._connect() as conn:

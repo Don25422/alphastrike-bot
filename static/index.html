@@ -2,74 +2,652 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AlphaStrike v4 Command Center</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 24px; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .badge { background: #dbeafe; color: #1d4ed8; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 13px; display: inline-block; margin-top: 6px; }
-    .btn-kill { background: #dc2626; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    .btn-start { background: #059669; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-right: 8px; }
-    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 20px; }
-    .card h3 { margin: 0 0 8px 0; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
-    .card .val { font-size: 26px; font-weight: 700; }
-    .pos { color: #059669; } .neg { color: #dc2626; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e2e8f0; }
-    .logs { background: #0f172a; color: #38bdf8; font-family: monospace; padding: 16px; border-radius: 10px; height: 200px; overflow-y: auto; font-size: 13px; }
-    svg { width: 100%; height: 180px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+    :root {
+      --bg-canvas: #071313;
+      --bg-sidebar: #050e0e;
+      --bg-card: #0c1f1f;
+      --bg-card-inner: #091818;
+      --border-subtle: rgba(0, 229, 176, 0.12);
+      --border-glow: rgba(0, 229, 176, 0.35);
+      --text-primary: #f8fafc;
+      --text-secondary: #8ca3a3;
+      --mint: #00e5b0;
+      --mint-dim: rgba(0, 229, 176, 0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.15);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: radial-gradient(circle at 85% 10%, #103333 0%, var(--bg-canvas) 45%);
+      color: var(--text-primary);
+      margin: 0;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: 235px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-subtle);
+      padding: 22px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 10px 22px 10px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--mint);
+      color: #041311;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 16px;
+      box-shadow: 0 0 18px rgba(0, 229, 176, 0.4);
+    }
+
+    .brand-name { font-weight: 700; font-size: 17px; }
+
+    .nav-menu {
+      list-style: none;
+      padding: 18px 0 0 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-item {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.15s ease;
+    }
+
+    .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+    .nav-item.active {
+      background: linear-gradient(90deg, rgba(0, 229, 176, 0.16), rgba(0, 229, 176, 0.04));
+      color: var(--text-primary);
+      border: 1px solid var(--border-glow);
+      font-weight: 600;
+    }
+
+    .sidebar-footer {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 12px;
+    }
+
+    /* Main Content Area */
+    .main {
+      flex: 1;
+      padding: 20px 28px;
+      overflow-y: auto;
+      max-width: 1480px;
+    }
+
+    /* Top Header Bar */
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .account-chip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00e5b0, #0284c7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #041311;
+      font-size: 14px;
+    }
+
+    .pro-tag {
+      background: var(--mint-dim);
+      color: var(--mint);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 5px;
+      margin-left: 6px;
+    }
+
+    .search-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 9px 14px;
+      color: var(--text-primary);
+      font-size: 13px;
+      width: 240px;
+      outline: none;
+    }
+    .search-box:focus { border-color: var(--mint); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-badge {
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      color: var(--mint);
+    }
+    .status-badge.halted {
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+    }
+
+    .btn-mint {
+      background: var(--mint);
+      color: #041311;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-mint:hover { opacity: 0.9; }
+
+    .btn-kill {
+      background: var(--red-dim);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-kill:hover { background: var(--red); color: #fff; }
+
+    /* Hero Portfolio Banner (Replaces Promo Banner with Live Equity + Curve) */
+    .hero-banner {
+      background: linear-gradient(120deg, #0c2626 0%, #091d1d 55%, #0f3836 100%);
+      border: 1px solid var(--border-glow);
+      border-radius: 18px;
+      padding: 22px 26px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: 1.1fr 1.4fr;
+      gap: 24px;
+      align-items: center;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .hero-stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+    .hero-stat-val { font-size: 24px; font-weight: 700; margin-top: 4px; }
+
+    .hero-chart svg {
+      width: 100%;
+      height: 150px;
+      background: rgba(5, 14, 14, 0.55);
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      display: block;
+    }
+
+    /* Filter Pills Bar */
+    .section-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .pill.active {
+      background: var(--mint-dim);
+      border-color: var(--mint);
+      color: var(--mint);
+    }
+
+    /* 3-Column Pair Cards Grid (Matches Screenshot Trader Cards) */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 26px;
+    }
+
+    .pair-card {
+      background: linear-gradient(180deg, #0f2626 0%, var(--bg-card) 100%);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 18px 20px;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    .pair-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+    }
+
+    .pair-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .pair-info { display: flex; align-items: center; gap: 10px; }
+    .pair-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--mint-dim);
+      border: 1px solid var(--border-glow);
+      color: var(--mint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .pair-name { font-weight: 700; font-size: 15px; }
+    .pair-sub { font-size: 11px; color: var(--text-secondary); }
+
+    .card-badge {
+      background: var(--mint);
+      color: #041311;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+    .card-badge.idle {
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--text-secondary);
+    }
+
+    .pair-mid {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 14px;
+    }
+
+    .roi-label { font-size: 11px; color: var(--text-secondary); }
+    .roi-val { font-size: 22px; font-weight: 800; margin-top: 2px; }
+
+    .sparkline { width: 120px; height: 44px; }
+
+    .pair-footer {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 12px;
+    }
+    .pf-label { color: var(--text-secondary); font-size: 10.5px; }
+    .pf-val { font-weight: 700; margin-top: 2px; }
+
+    /* Panel Containers for Tables & Logs */
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 22px;
+    }
+    .panel.hidden { display: none; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    td { padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+
+    .logs {
+      background: #040c0c;
+      border: 1px solid var(--border-subtle);
+      color: #6ee7b7;
+      font-family: Consolas, monospace;
+      padding: 14px;
+      border-radius: 12px;
+      height: 220px;
+      overflow-y: auto;
+      font-size: 12.5px;
+      line-height: 1.6;
+    }
+
+    .pos { color: var(--mint); }
+    .neg { color: var(--red); }
+
+    @media (max-width: 1100px) {
+      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-banner { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .cards-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="header">
+  <aside class="sidebar">
     <div>
-      <h1 style="margin:0;">AlphaStrike v4 Momentum Engine</h1>
-      <span class="badge" id="modeBadge">CONNECTING...</span>
+      <div class="brand">
+        <div class="brand-logo">A</div>
+        <div class="brand-name">AlphaStrike</div>
+      </div>
+
+      <ul class="nav-menu">
+        <li class="nav-item active" onclick="switchTab('overview', this)"><span>Dashboard Overview</span></li>
+        <li class="nav-item" onclick="switchTab('positions', this)"><span>Active Positions</span><span id="navPosCount">0</span></li>
+        <li class="nav-item" onclick="switchTab('ledger', this)"><span>Closed Trade Ledger</span></li>
+        <li class="nav-item" onclick="switchTab('console', this)"><span>Engine Console</span></li>
+      </ul>
     </div>
-    <div>
-      <button class="btn-start" onclick="fetch('/api/start', {method:'POST'})">START ENGINE</button>
-      <button class="btn-kill" onclick="fetch('/api/kill', {method:'POST'})">EMERGENCY KILL SWITCH</button>
+
+    <div class="sidebar-footer">
+      <div style="color: var(--text-secondary); margin-bottom: 4px;">Strategy Engine</div>
+      <div style="font-weight: 700; color: var(--mint);">4H/1H Donchian v4</div>
+      <div style="color: var(--text-secondary); font-size: 11px; margin-top: 4px;">1.2R Partial + 1.5R Trail</div>
     </div>
-  </div>
+  </aside>
 
-  <div class="grid">
-    <div class="card" style="margin-bottom:0;"><h3>Account Balance</h3><div class="val" id="balance">$0.00</div></div>
-    <div class="card" style="margin-bottom:0;"><h3>Total Equity</h3><div class="val" id="equity">$0.00</div></div>
-    <div class="card" style="margin-bottom:0;"><h3>Unrealized PnL</h3><div class="val" id="upnl">$0.00</div></div>
-    <div class="card" style="margin-bottom:0;"><h3>Closed Win Rate / Trades</h3><div class="val" id="stats">0% (0)</div></div>
-  </div>
+  <main class="main">
+    <!-- Top Bar -->
+    <div class="top-header">
+      <div class="account-chip">
+        <div class="avatar">DK</div>
+        <div>
+          <div style="font-weight: 700; font-size: 14px;">Danglas Kimathi <span class="pro-tag">ALGO PRO</span></div>
+          <div style="font-size: 11.5px; color: var(--text-secondary);">Bybit Perpetuals • SQLite Synced</div>
+        </div>
+      </div>
 
-  <div class="card">
-    <h3>Live Equity Curve (SQLite Persisted)</h3>
-    <svg id="equityChart" viewBox="0 0 800 180" preserveAspectRatio="none"></svg>
-  </div>
+      <input type="text" class="search-box" id="pairSearch" placeholder="Filter watchlist pair..." oninput="renderPairCards()" />
 
-  <div class="card">
-    <h3>Active Positions</h3>
-    <table>
-      <thead><tr><th>Pair</th><th>Side</th><th>Entry</th><th>Current</th><th>Stop Loss</th><th>Take Profit</th><th>Unrealized PnL</th></tr></thead>
-      <tbody id="posBody"><tr><td colspan="7">Scanning 6 high-beta perpetual pairs...</td></tr></tbody>
-    </table>
-  </div>
+      <div class="header-actions">
+        <div class="status-badge" id="modeBadge">CONNECTING...</div>
+        <button class="btn-mint" onclick="fetch('/api/start', {method:'POST'})">Start Engine</button>
+        <button class="btn-kill" onclick="fetch('/api/kill', {method:'POST'})">Kill Switch</button>
+      </div>
+    </div>
 
-  <div class="card">
-    <h3>Closed Trade History (Saved in alphastrike.db)</h3>
-    <table>
-      <thead><tr><th>Closed (UTC)</th><th>Pair</th><th>Side</th><th>Entry</th><th>Exit</th><th>Reason</th><th>Realized PnL</th></tr></thead>
-      <tbody id="histBody"><tr><td colspan="7">No closed trades recorded yet.</td></tr></tbody>
-    </table>
-  </div>
+    <!-- Hero Portfolio Banner -->
+    <div class="hero-banner">
+      <div>
+        <div style="font-size: 18px; font-weight: 700;">AlphaStrike Algorithmic Portfolio</div>
+        <div style="font-size: 12.5px; color: var(--text-secondary); margin-top: 4px;">6 High-Beta Perpetual Pairs • 1.0% Risk Per Trade • 5% Daily Circuit Breaker</div>
+        <div class="hero-metrics">
+          <div>
+            <div class="hero-stat-label">Total Equity</div>
+            <div class="hero-stat-val" id="equity">$100,000.00</div>
+          </div>
+          <div>
+            <div class="hero-stat-label">Account Balance</div>
+            <div class="hero-stat-val" id="balance">$100,000.00</div>
+          </div>
+          <div>
+            <div class="hero-stat-label">Floating PnL</div>
+            <div class="hero-stat-val pos" id="upnl">+$0.00</div>
+          </div>
+          <div>
+            <div class="hero-stat-label">Win Rate / Trades</div>
+            <div class="hero-stat-val pos" id="stats">0.0% (0)</div>
+          </div>
+        </div>
+      </div>
 
-  <div class="card">
-    <h3>Live Execution Engine Logs</h3>
-    <div class="logs" id="logBox"></div>
-  </div>
+      <div class="hero-chart">
+        <svg id="equityChart" viewBox="0 0 800 150" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+
+    <!-- View Filter Pills -->
+    <div class="section-bar">
+      <h2 style="margin: 0; font-size: 17px;">Watchlist Strategy Cards</h2>
+      <div class="filter-pills">
+        <button class="pill active" onclick="switchTab('overview', null, this)">All Pairs (6)</button>
+        <button class="pill" onclick="switchTab('positions', null, this)">Active Positions</button>
+        <button class="pill" onclick="switchTab('ledger', null, this)">Closed History</button>
+        <button class="pill" onclick="switchTab('console', null, this)">Live Logs</button>
+      </div>
+    </div>
+
+    <!-- 3-Column Pair Cards Grid -->
+    <div class="cards-grid" id="pairCardsGrid"></div>
+
+    <!-- Active Positions Panel -->
+    <div class="panel" id="panel-positions">
+      <h3 style="margin: 0 0 12px 0; font-size: 15px;">Active Positions</h3>
+      <table>
+        <thead>
+          <tr><th>Pair</th><th>Side</th><th>Entry</th><th>Current</th><th>Stop Loss</th><th>Take Profit</th><th>Unrealized PnL</th></tr>
+        </thead>
+        <tbody id="posBody">
+          <tr><td colspan="7" style="color: var(--text-secondary);">Scanning 6 high-beta perpetual pairs...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Closed Trade Ledger Panel -->
+    <div class="panel" id="panel-ledger">
+      <h3 style="margin: 0 0 12px 0; font-size: 15px;">Closed Trade Ledger (alphastrike.db)</h3>
+      <table>
+        <thead>
+          <tr><th>Closed (UTC)</th><th>Pair</th><th>Side</th><th>Entry</th><th>Exit</th><th>Reason</th><th>Realized PnL</th></tr>
+        </thead>
+        <tbody id="histBody">
+          <tr><td colspan="7" style="color: var(--text-secondary);">No closed trades recorded yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Engine Console Panel -->
+    <div class="panel" id="panel-console">
+      <h3 style="margin: 0 0 12px 0; font-size: 15px;">Live Execution Console</h3>
+      <div class="logs" id="logBox"></div>
+    </div>
+  </main>
 
   <script>
+    const WATCHLIST = [
+      { symbol: "AVAX/USDT:USDT", short: "AVAX", name: "Avalanche Perp" },
+      { symbol: "SOL/USDT:USDT", short: "SOL", name: "Solana Perp" },
+      { symbol: "ETH/USDT:USDT", short: "ETH", name: "Ethereum Perp" },
+      { symbol: "LINK/USDT:USDT", short: "LINK", name: "Chainlink Perp" },
+      { symbol: "SUI/USDT:USDT", short: "SUI", name: "Sui Network Perp" },
+      { symbol: "DOGE/USDT:USDT", short: "DOGE", name: "Dogecoin Perp" }
+    ];
+
+    let latestData = { positions: [], history: [], equity_curve: [] };
+
+    function switchTab(tab, navEl, pillEl) {
+      if (navEl) {
+        document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+        navEl.classList.add("active");
+      }
+      if (pillEl) {
+        document.querySelectorAll(".pill").forEach(el => el.classList.remove("active"));
+        pillEl.classList.add("active");
+      }
+
+      const grid = document.getElementById("pairCardsGrid");
+      const pPos = document.getElementById("panel-positions");
+      const pLed = document.getElementById("panel-ledger");
+      const pCon = document.getElementById("panel-console");
+
+      if (tab === "overview") {
+        grid.style.display = "grid";
+        pPos.classList.remove("hidden");
+        pLed.classList.remove("hidden");
+        pCon.classList.remove("hidden");
+      } else if (tab === "positions") {
+        grid.style.display = "none";
+        pPos.classList.remove("hidden");
+        pLed.classList.add("hidden");
+        pCon.classList.add("hidden");
+      } else if (tab === "ledger") {
+        grid.style.display = "none";
+        pPos.classList.add("hidden");
+        pLed.classList.remove("hidden");
+        pCon.classList.add("hidden");
+      } else if (tab === "console") {
+        grid.style.display = "none";
+        pPos.classList.add("hidden");
+        pLed.classList.add("hidden");
+        pCon.classList.remove("hidden");
+      }
+    }
+
+    function buildSparkline(trades, isPositive) {
+      const color = isPositive ? "#00e5b0" : "#ef4444";
+      if (!trades || trades.length < 2) {
+        return `<svg class="sparkline" viewBox="0 0 120 44"><path d="M4,28 Q30,22 60,25 T116,18" fill="none" stroke="${color}" stroke-width="2.5" stroke-opacity="0.55"/></svg>`;
+      }
+      let cum = 0;
+      const pts = [0, ...trades.slice().reverse().map(t => (cum += t.pnl))];
+      const min = Math.min(...pts);
+      const max = Math.max(...pts);
+      const range = max - min || 1;
+      const coords = pts.map((v, i) => {
+        const x = (i / (pts.length - 1)) * 112 + 4;
+        const y = 38 - ((v - min) / range) * 30;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+      return `<svg class="sparkline" viewBox="0 0 120 44"><polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" points="${coords}"/></svg>`;
+    }
+
+    function renderPairCards() {
+      const query = document.getElementById("pairSearch").value.toLowerCase();
+      const grid = document.getElementById("pairCardsGrid");
+
+      grid.innerHTML = WATCHLIST.filter(w =>
+        w.short.toLowerCase().includes(query) || w.name.toLowerCase().includes(query)
+      ).map(w => {
+        const activePos = latestData.positions.find(p => p.symbol === w.symbol);
+        const pairTrades = latestData.history.filter(h => h.symbol === w.symbol);
+        const realizedPnl = pairTrades.reduce((acc, t) => acc + t.pnl, 0);
+        const wins = pairTrades.filter(t => t.pnl > 0).length;
+        const winRate = pairTrades.length ? Math.round((wins / pairTrades.length) * 100) : 0;
+        const isPos = realizedPnl >= 0;
+
+        return `
+          <div class="pair-card">
+            <div class="pair-card-top">
+              <div class="pair-info">
+                <div class="pair-icon">${w.short.slice(0, 3)}</div>
+                <div>
+                  <div class="pair-name">${w.short}/USDT</div>
+                  <div class="pair-sub">${w.name}</div>
+                </div>
+              </div>
+              <span class="card-badge ${activePos ? '' : 'idle'}">${activePos ? activePos.side : 'SCANNING'}</span>
+            </div>
+
+            <div class="pair-mid">
+              <div>
+                <div class="roi-label">Realized PnL</div>
+                <div class="roi-val ${isPos ? 'pos' : 'neg'}">${isPos ? '+' : ''}$${realizedPnl.toFixed(2)}</div>
+              </div>
+              ${buildSparkline(pairTrades, isPos)}
+            </div>
+
+            <div class="pair-footer">
+              <div>
+                <div class="pf-label">Floating</div>
+                <div class="pf-val ${activePos && activePos.unrealized_pnl < 0 ? 'neg' : 'pos'}">
+                  ${activePos ? (activePos.unrealized_pnl >= 0 ? '+' : '') + '$' + activePos.unrealized_pnl.toFixed(2) : '$0.00'}
+                </div>
+              </div>
+              <div>
+                <div class="pf-label">Trades</div>
+                <div class="pf-val">${pairTrades.length}</div>
+              </div>
+              <div>
+                <div class="pf-label">Win Ratio</div>
+                <div class="pf-val">${winRate}%</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
     function renderEquityChart(points) {
       const svg = document.getElementById("equityChart");
       if (!points || points.length < 2) {
-        svg.innerHTML = `<text x="20" y="95" fill="#64748b" font-size="14">Waiting for first closed trade to plot equity curve...</text>`;
+        svg.innerHTML = `<text x="20" y="80" fill="#8ca3a3" font-size="13" font-family="sans-serif">Waiting for first closed trade to plot live equity curve...</text>`;
         return;
       }
       const vals = points.map(p => p.equity);
@@ -78,47 +656,61 @@
       const range = max - min || 1;
       const coords = points.map((p, idx) => {
         const x = (idx / (points.length - 1)) * 780 + 10;
-        const y = 165 - ((p.equity - min) / range) * 150;
+        const y = 135 - ((p.equity - min) / range) * 115;
         return `${x.toFixed(1)},${y.toFixed(1)}`;
       }).join(" ");
 
-      const lastVal = vals[vals.length - 1];
-      const firstVal = vals[0];
-      const strokeColor = lastVal >= firstVal ? "#059669" : "#dc2626";
-      svg.innerHTML = `<polyline fill="none" stroke="${strokeColor}" stroke-width="3" points="${coords}" />`;
+      const strokeColor = vals[vals.length - 1] >= vals[0] ? "#00e5b0" : "#ef4444";
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="mintFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+        <polygon fill="url(#mintFill)" points="10,145 ${coords} 790,145"/>
+        <polyline fill="none" stroke="${strokeColor}" stroke-width="2.8" points="${coords}"/>
+      `;
     }
 
     const ws = new WebSocket(`ws://${location.host}/ws`);
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      document.getElementById("modeBadge").innerText = `${data.mode} • ${data.is_running ? "ACTIVE" : "HALTED"}`;
-      document.getElementById("balance").innerText = `$${data.balance.toLocaleString()}`;
-      document.getElementById("equity").innerText = `$${data.equity.toLocaleString()}`;
+      latestData = data;
+
+      const badge = document.getElementById("modeBadge");
+      badge.className = `status-badge ${data.is_running ? "" : "halted"}`;
+      badge.innerText = `${data.mode} • ${data.is_running ? "ACTIVE" : "HALTED"}`;
+
+      document.getElementById("balance").innerText = `$${data.balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+      document.getElementById("equity").innerText = `$${data.equity.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
       document.getElementById("stats").innerText = `${data.stats.win_rate}% (${data.stats.total_trades})`;
+      document.getElementById("navPosCount").innerText = data.positions.length;
 
       const upnlEl = document.getElementById("upnl");
       upnlEl.innerText = `${data.unrealized_pnl >= 0 ? "+" : ""}$${data.unrealized_pnl.toFixed(2)}`;
-      upnlEl.className = `val ${data.unrealized_pnl >= 0 ? "pos" : "neg"}`;
+      upnlEl.className = `hero-stat-val ${data.unrealized_pnl >= 0 ? "pos" : "neg"}`;
 
       renderEquityChart(data.equity_curve);
+      renderPairCards();
 
       const posBody = document.getElementById("posBody");
       posBody.innerHTML = data.positions.length ? data.positions.map(p => `
         <tr>
           <td><b>${p.symbol}</b></td>
-          <td class="${p.side === 'LONG' ? 'pos' : 'neg'}"><b>${p.side}</b></td>
+          <td class="${p.side.includes('LONG') ? 'pos' : 'neg'}"><b>${p.side}</b></td>
           <td>$${p.entry.toFixed(4)}</td>
           <td>$${p.current_price.toFixed(4)}</td>
           <td>$${p.sl.toFixed(4)} ${p.be_locked ? '(TRAIL)' : ''}</td>
           <td>$${p.tp.toFixed(4)}</td>
-          <td class="${p.unrealized_pnl >= 0 ? 'pos' : 'neg'}">$${p.unrealized_pnl.toFixed(2)}</td>
+          <td class="${p.unrealized_pnl >= 0 ? 'pos' : 'neg'}"><b>$${p.unrealized_pnl.toFixed(2)}</b></td>
         </tr>
-      `).join("") : `<tr><td colspan="7">No open positions — scanning 6 high-beta perpetual pairs...</td></tr>`;
+      `).join("") : `<tr><td colspan="7" style="color: var(--text-secondary);">No open positions — scanning 6 high-beta perpetual pairs...</td></tr>`;
 
       const histBody = document.getElementById("histBody");
       histBody.innerHTML = data.history.length ? data.history.map(h => `
         <tr>
-          <td>${h.closed_at}</td>
+          <td style="color: var(--text-secondary);">${h.closed_at}</td>
           <td><b>${h.symbol}</b></td>
           <td>${h.side}</td>
           <td>$${h.entry.toFixed(4)}</td>
@@ -126,10 +718,12 @@
           <td>${h.reason}</td>
           <td class="${h.pnl >= 0 ? 'pos' : 'neg'}"><b>${h.pnl >= 0 ? '+' : ''}$${h.pnl.toFixed(2)}</b></td>
         </tr>
-      `).join("") : `<tr><td colspan="7">No closed trades recorded yet.</td></tr>`;
+      `).join("") : `<tr><td colspan="7" style="color: var(--text-secondary);">No closed trades recorded yet.</td></tr>`;
 
       document.getElementById("logBox").innerHTML = data.logs.map(l => `<div>${l}</div>`).join("");
     };
+
+    renderPairCards();
   </script>
 </body>
 </html>

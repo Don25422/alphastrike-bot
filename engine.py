@@ -14,6 +14,7 @@ class TradingEngine:
         exchange_params = {
             "enableRateLimit": True,
             "rateLimit": 150,
+            "timeout": 30000,
             "options": {"defaultType": "swap"}
         }
         if not config.paper_trading:
@@ -31,10 +32,21 @@ class TradingEngine:
         self.risk = RiskManager(config)
         self.risk.day_start_equity = self.balance
         self.positions = self.db.load_open_positions()
+        self.latest_prices = {}
+        self.price_history = {}
+        self.available_markets = []
         self.logs = []
         self.is_running = False
         self._loop_active = False
         self._ohlcv_cache = {}
+
+    def record_price_tick(self, symbol: str, price: float):
+        self.latest_prices[symbol] = price
+        hist = self.price_history.setdefault(symbol, [])
+        if not hist or hist[-1] != price:
+            hist.append(price)
+            if len(hist) > 45:
+                del hist[0]
 
     def log(self, msg: str):
         ts = datetime.now(timezone.utc).strftime("%H:%M:%S")
@@ -42,6 +54,29 @@ class TradingEngine:
         print(entry)
         self.logs.insert(0, entry)
         self.logs = self.logs[:100]
+
+    async def load_tradeable_markets(self):
+        try:
+            markets = await self.exchange.load_markets()
+            linear_usdt = []
+            for sym, m in markets.items():
+                if (
+                    m.get("active", True)
+                    and m.get("swap", False)
+                    and m.get("linear", False)
+                    and m.get("settle") == "USDT"
+                    and sym.endswith(":USDT")
+                ):
+                    linear_usdt.append({
+                        "symbol": sym,
+                        "short": m.get("base", sym.split("/")[0]),
+                        "name": f"{m.get('base', sym.split('/')[0])} Perpetual"
+                    })
+            linear_usdt.sort(key=lambda x: x["short"])
+            self.available_markets = linear_usdt
+            self.log(f"Loaded {len(self.available_markets)} tradeable Bybit USDT perpetual markets.")
+        except Exception as e:
+            self.log(f"Market catalog sync warning: {e}")
 
     async def sync_live_balance(self):
         if self.config.paper_trading:
@@ -62,12 +97,20 @@ class TradingEngine:
         if cache_key in self._ohlcv_cache:
             cached_at, cached_df = self._ohlcv_cache[cache_key]
             if now - cached_at < ttl:
+                if timeframe == "1h" and not cached_df.empty:
+                    self.record_price_tick(symbol, float(cached_df["close"].iloc[-1]))
                 return cached_df
 
         ohlcv = await self.exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
         df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
         self._ohlcv_cache[cache_key] = (now, df)
-        await asyncio.sleep(0.25)
+
+        if timeframe == "1h" and not df.empty:
+            if symbol not in self.price_history or len(self.price_history[symbol]) < 5:
+                self.price_history[symbol] = [float(x) for x in df["close"].tail(30).tolist()]
+            self.record_price_tick(symbol, float(df["close"].iloc[-1]))
+
+        await asyncio.sleep(0.35)
         return df
 
     async def place_live_entry(self, symbol: str, side: str, qty: float, sl: float, tp: float):
@@ -117,16 +160,49 @@ class TradingEngine:
             params={"reduceOnly": True}
         )
 
+    async def close_single_position(self, symbol: str, reason: str = "MANUAL CLOSE"):
+        pos = self.positions.get(symbol)
+        if not pos:
+            return False
+
+        exit_price = pos.get("current_price") or self.latest_prices.get(symbol) or pos["entry"]
+        if not self.config.paper_trading:
+            try:
+                await self.close_live_portion(symbol, pos["side"], pos["qty"])
+                await self.exchange.cancel_all_orders(symbol)
+            except Exception as e:
+                self.log(f"Live manual close warning on {symbol}: {e}")
+
+        gross_pnl = (exit_price - pos["entry"]) * pos["qty"] if pos["side"] == "LONG" else (pos["entry"] - exit_price) * pos["qty"]
+        fee = (exit_price * pos["qty"]) * self.config.taker_fee
+        net_pnl = round(gross_pnl - fee, 2)
+
+        self.balance = round(self.balance + net_pnl, 2)
+        closed = {
+            "symbol": symbol,
+            "side": pos["side"],
+            "entry": pos["entry"],
+            "exit": exit_price,
+            "qty": pos["qty"],
+            "pnl": net_pnl,
+            "reason": reason,
+            "closed_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        }
+        self.db.record_trade(closed, self.balance)
+        self.db.remove_open_position(symbol)
+        del self.positions[symbol]
+        self.log(f"CLOSED {pos['side']} {symbol} ({reason}) | Net PnL: ${net_pnl:+,.2f}")
+        return True
+
     async def manage_open_positions(self):
         if not self.positions:
             return
 
-        tickers = await self.exchange.fetch_tickers(list(self.positions.keys()))
-
         for symbol in list(self.positions.keys()):
             pos = self.positions[symbol]
-            ticker = tickers.get(symbol) or await self.exchange.fetch_ticker(symbol)
+            ticker = await self.exchange.fetch_ticker(symbol)
             price = float(ticker["last"])
+            self.record_price_tick(symbol, price)
             pos["current_price"] = price
             r_dist = pos["risk_dist"]
 
@@ -234,21 +310,33 @@ class TradingEngine:
                 del self.positions[symbol]
                 self.log(f"CLOSED {pos['side']} {symbol} ({exit_reason}) | Net PnL: ${net_pnl:+,.2f}")
 
+            await asyncio.sleep(0.15)
+
     async def scan_markets(self):
+        if datetime.now(timezone.utc).second < 3:
+            return
+
         allowed, status = self.risk.can_trade(self.balance, len(self.positions))
         if not allowed:
             return
 
-        for symbol in self.config.watchlist:
+        for symbol in list(self.config.watchlist):
+            pair_cfg = self.config.get_pair_params(symbol)
+            if not pair_cfg["enabled"]:
+                continue
             if symbol in self.positions or len(self.positions) >= self.config.max_open_positions:
                 continue
             try:
                 htf_df = await self.fetch_df(symbol, self.config.htf_timeframe, limit=210)
                 ltf_df = await self.fetch_df(symbol, self.config.ltf_timeframe, limit=60)
-                signal = evaluate_smc_setup(symbol, htf_df, ltf_df, self.config.reward_to_risk)
+                signal = evaluate_smc_setup(symbol, htf_df, ltf_df, pair_cfg["reward_to_risk"])
 
                 if signal:
-                    qty = self.risk.calculate_position_size(self.balance, signal.entry_price, signal.stop_loss)
+                    stop_distance = abs(signal.entry_price - signal.stop_loss)
+                    if stop_distance <= 0:
+                        continue
+                    risk_dollars = self.balance * pair_cfg["risk_per_trade_pct"]
+                    qty = round(risk_dollars / stop_distance, 4)
                     if qty <= 0:
                         continue
 
@@ -279,9 +367,13 @@ class TradingEngine:
                         "reason": signal.reason
                     }
                     self.db.upsert_open_position(self.positions[symbol])
-                    self.log(f"OPEN {signal.side} {symbol} @ {entry_price:.4f} | Qty: {qty} | {signal.reason}")
+                    self.log(
+                        f"OPEN {signal.side} {symbol} @ {entry_price:.4f} | Qty: {qty} | "
+                        f"Risk: {pair_cfg['risk_per_trade_pct']*100:.2f}% | R:R: {pair_cfg['reward_to_risk']}R"
+                    )
             except Exception as e:
-                self.log(f"Scan error on {symbol}: {e}")
+                self.log(f"Scan retry queued for {symbol}: {type(e).__name__}")
+            await asyncio.sleep(0.5)
 
     async def run_loop(self):
         if self._loop_active:
@@ -290,20 +382,20 @@ class TradingEngine:
         self.is_running = True
 
         try:
+            await self.load_tradeable_markets()
             if not self.config.paper_trading:
-                await self.exchange.load_markets()
                 await self.sync_live_balance()
                 self.risk.day_start_equity = self.balance
 
             mode_label = "PAPER" if self.config.paper_trading else ("TESTNET" if self.config.use_testnet else "LIVE MAINNET")
-            self.log(f"AlphaStrike v4 Engine Started ({mode_label}) | Balance: ${self.balance:,.2f} | Restored Positions: {len(self.positions)}")
+            self.log(f"AlphaStrike v4 Engine Started ({mode_label}) | Balance: ${self.balance:,.2f} | Watchlist: {len(self.config.watchlist)} pairs")
 
             while self.is_running:
                 try:
                     await self.manage_open_positions()
                     await self.scan_markets()
                 except Exception as e:
-                    self.log(f"Loop error: {e}")
+                    self.log(f"Transient network hiccup (auto-recovering): {type(e).__name__}")
                 await asyncio.sleep(15)
         finally:
             self._loop_active = False

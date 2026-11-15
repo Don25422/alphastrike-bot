@@ -9,7 +9,6 @@
       --bg-canvas: #071313;
       --bg-sidebar: #050e0e;
       --bg-card: #0c1f1f;
-      --bg-card-inner: #091818;
       --border-subtle: rgba(0, 229, 176, 0.12);
       --border-glow: rgba(0, 229, 176, 0.35);
       --text-primary: #f8fafc;
@@ -17,7 +16,10 @@
       --mint: #00e5b0;
       --mint-dim: rgba(0, 229, 176, 0.12);
       --red: #ef4444;
-      --red-dim: rgba(239, 68, 68, 0.15);
+      --red-bright: #f87171;
+      --red-dim: rgba(239, 68, 68, 0.16);
+      --red-border: rgba(239, 68, 68, 0.45);
+      --amber: #f59e0b;
     }
 
     * { box-sizing: border-box; }
@@ -31,7 +33,6 @@
       min-height: 100vh;
     }
 
-    /* Left Sidebar */
     .sidebar {
       width: 235px;
       background: var(--bg-sidebar);
@@ -105,7 +106,6 @@
       font-size: 12px;
     }
 
-    /* Main Content Area */
     .main {
       flex: 1;
       padding: 20px 28px;
@@ -113,7 +113,6 @@
       max-width: 1480px;
     }
 
-    /* Top Header Bar */
     .top-header {
       display: flex;
       justify-content: space-between;
@@ -123,11 +122,7 @@
       flex-wrap: wrap;
     }
 
-    .account-chip {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .account-chip { display: flex; align-items: center; gap: 12px; }
 
     .avatar {
       width: 38px;
@@ -164,11 +159,7 @@
     }
     .search-box:focus { border-color: var(--mint); }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
 
     .status-badge {
       padding: 8px 14px;
@@ -179,10 +170,7 @@
       border: 1px solid var(--border-glow);
       color: var(--mint);
     }
-    .status-badge.halted {
-      border-color: rgba(239, 68, 68, 0.5);
-      color: #fca5a5;
-    }
+    .status-badge.halted { border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; }
 
     .btn-mint {
       background: var(--mint);
@@ -196,6 +184,18 @@
     }
     .btn-mint:hover { opacity: 0.9; }
 
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-ghost:hover { border-color: var(--mint); color: var(--text-primary); }
+
     .btn-kill {
       background: var(--red-dim);
       color: #fca5a5;
@@ -208,7 +208,6 @@
     }
     .btn-kill:hover { background: var(--red); color: #fff; }
 
-    /* Hero Portfolio Banner (Replaces Promo Banner with Live Equity + Curve) */
     .hero-banner {
       background: linear-gradient(120deg, #0c2626 0%, #091d1d 55%, #0f3836 100%);
       border: 1px solid var(--border-glow);
@@ -241,7 +240,6 @@
       display: block;
     }
 
-    /* Filter Pills Bar */
     .section-bar {
       display: flex;
       justify-content: space-between;
@@ -251,11 +249,7 @@
       gap: 12px;
     }
 
-    .filter-pills {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+    .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; }
 
     .pill {
       background: var(--bg-card);
@@ -273,7 +267,6 @@
       color: var(--mint);
     }
 
-    /* 3-Column Pair Cards Grid (Matches Screenshot Trader Cards) */
     .cards-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -281,17 +274,32 @@
       margin-bottom: 26px;
     }
 
+    /* Pair Card: Emerald Profit/Neutral vs Crimson Loss */
     .pair-card {
       background: linear-gradient(180deg, #0f2626 0%, var(--bg-card) 100%);
       border: 1px solid var(--border-subtle);
       border-radius: 18px;
       padding: 18px 20px;
-      transition: border-color 0.15s ease, transform 0.15s ease;
+      cursor: pointer;
+      transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease, background 0.25s ease;
     }
     .pair-card:hover {
-      border-color: var(--border-glow);
+      border-color: var(--mint);
       transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 229, 176, 0.14);
     }
+
+    .pair-card.in-loss {
+      background: linear-gradient(180deg, #2a1014 0%, #1a0b0e 100%);
+      border-color: var(--red-border);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.12);
+    }
+    .pair-card.in-loss:hover {
+      border-color: var(--red-bright);
+      box-shadow: 0 10px 26px rgba(239, 68, 68, 0.24);
+    }
+
+    .pair-card.disabled-pair { opacity: 0.48; }
 
     .pair-card-top {
       display: flex;
@@ -312,11 +320,25 @@
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 12px;
+      font-size: 11px;
+    }
+    .pair-card.in-loss .pair-icon {
+      background: var(--red-dim);
+      border-color: var(--red-border);
+      color: var(--red-bright);
     }
 
-    .pair-name { font-weight: 700; font-size: 15px; }
-    .pair-sub { font-size: 11px; color: var(--text-secondary); }
+    .pair-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+    .custom-dot {
+      font-size: 9.5px;
+      background: rgba(245, 158, 11, 0.16);
+      color: var(--amber);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+    .pair-sub { font-size: 11.5px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 
     .card-badge {
       background: var(--mint);
@@ -326,22 +348,69 @@
       padding: 4px 10px;
       border-radius: 8px;
     }
-    .card-badge.idle {
-      background: rgba(148, 163, 184, 0.15);
-      color: var(--text-secondary);
+    .pair-card.in-loss .card-badge:not(.idle) {
+      background: var(--red);
+      color: #fff;
     }
+    .card-badge.idle { background: rgba(148, 163, 184, 0.15); color: var(--text-secondary); }
+
+    .card-remove-btn {
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .card-remove-btn:hover { background: var(--red); color: #fff; }
 
     .pair-mid {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
+      gap: 10px;
       margin-bottom: 14px;
     }
 
     .roi-label { font-size: 11px; color: var(--text-secondary); }
-    .roi-val { font-size: 22px; font-weight: 800; margin-top: 2px; }
+    .roi-val { font-size: 21px; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; }
 
-    .sparkline { width: 120px; height: 44px; }
+    /* Interactive Live Price Sparkline */
+    .spark-wrap {
+      position: relative;
+      width: 140px;
+      height: 52px;
+      cursor: crosshair;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.18);
+      padding: 2px;
+    }
+    .sparkline { width: 100%; height: 100%; display: block; overflow: visible; }
+    .spark-tooltip {
+      position: absolute;
+      top: -22px;
+      right: 0;
+      background: #041010;
+      border: 1px solid var(--border-glow);
+      color: var(--text-primary);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 5px;
+      pointer-events: none;
+      white-space: nowrap;
+      display: none;
+      z-index: 10;
+    }
+    .pair-card.in-loss .spark-tooltip { border-color: var(--red-border); }
+
+    @keyframes pulseDot {
+      0% { r: 2.8; opacity: 1; }
+      50% { r: 4.8; opacity: 0.55; }
+      100% { r: 2.8; opacity: 1; }
+    }
+    .live-pulse-dot { animation: pulseDot 1.8s infinite ease-in-out; }
 
     .pair-footer {
       display: grid;
@@ -351,9 +420,9 @@
       font-size: 12px;
     }
     .pf-label { color: var(--text-secondary); font-size: 10.5px; }
-    .pf-val { font-weight: 700; margin-top: 2px; }
+    .pf-val { font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
 
-    /* Panel Containers for Tables & Logs */
+    /* Interactive Risk & Settings Panel */
     .panel {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
@@ -363,16 +432,217 @@
     }
     .panel.hidden { display: none; }
 
-    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .control-box {
+      background: #081717;
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      gap: 8px;
+    }
+
+    .num-input-wrap {
+      display: flex;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 8px;
+      padding: 3px 8px;
+    }
+
+    .num-input {
+      width: 62px;
+      background: transparent;
+      border: none;
+      color: var(--mint);
+      font-weight: 700;
+      font-size: 13.5px;
+      text-align: right;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .num-unit {
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--mint);
+      cursor: pointer;
+    }
+
+    /* Exchange Market Search & Add Bar */
+    .market-adder-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .market-search-input {
+      flex: 1;
+      min-width: 240px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-size: 13.5px;
+      outline: none;
+    }
+
+    .market-dropdown {
+      position: absolute;
+      top: 44px;
+      left: 0;
+      width: 340px;
+      max-height: 240px;
+      overflow-y: auto;
+      background: #061414;
+      border: 1px solid var(--mint);
+      border-radius: 12px;
+      z-index: 60;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+      display: none;
+    }
+    .market-dropdown.open { display: block; }
+
+    .market-option {
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+    }
+    .market-option:hover { background: var(--mint-dim); }
+
+    .toggle-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .pair-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      font-weight: 700;
+      border: 1px solid var(--border-glow);
+      background: var(--mint-dim);
+      color: var(--mint);
+    }
+    .pair-chip.off {
+      border-color: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-secondary);
+    }
+    .chip-x {
+      cursor: pointer;
+      color: #fca5a5;
+      font-weight: 900;
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+    .chip-x:hover { background: var(--red); color: #fff; }
+
+    /* Slide-over Pair Inspection & Custom Config Drawer */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 8, 8, 0.72);
+      backdrop-filter: blur(4px);
+      z-index: 90;
+      display: none;
+    }
+    .drawer-backdrop.open { display: block; }
+
+    .pair-drawer {
+      position: fixed;
+      top: 0;
+      right: -560px;
+      width: 540px;
+      max-width: 100vw;
+      height: 100vh;
+      background: #071616;
+      border-left: 1px solid var(--border-glow);
+      z-index: 100;
+      padding: 24px;
+      overflow-y: auto;
+      transition: right 0.25s ease;
+      box-shadow: -16px 0 40px rgba(0, 0, 0, 0.6);
+    }
+    .pair-drawer.open { right: 0; }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 18px;
+    }
+
+    .drawer-kpis {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .kpi-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .kpi-tile-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; }
+    .kpi-tile-val { font-size: 18px; font-weight: 800; margin-top: 4px; }
+
+    .drawer-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th {
       text-align: left;
-      padding: 10px 12px;
+      padding: 10px;
       color: var(--text-secondary);
       font-size: 11px;
       text-transform: uppercase;
       border-bottom: 1px solid var(--border-subtle);
     }
-    td { padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+    td { padding: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
 
     .logs {
       background: #040c0c;
@@ -388,15 +658,15 @@
     }
 
     .pos { color: var(--mint); }
-    .neg { color: var(--red); }
+    .neg { color: var(--red-bright); }
 
     @media (max-width: 1100px) {
-      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+      .cards-grid, .settings-grid { grid-template-columns: repeat(2, 1fr); }
       .hero-banner { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
       .sidebar { display: none; }
-      .cards-grid { grid-template-columns: 1fr; }
+      .cards-grid, .settings-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -410,6 +680,7 @@
 
       <ul class="nav-menu">
         <li class="nav-item active" onclick="switchTab('overview', this)"><span>Dashboard Overview</span></li>
+        <li class="nav-item" onclick="switchTab('settings', this)"><span>Watchlist & Risk</span></li>
         <li class="nav-item" onclick="switchTab('positions', this)"><span>Active Positions</span><span id="navPosCount">0</span></li>
         <li class="nav-item" onclick="switchTab('ledger', this)"><span>Closed Trade Ledger</span></li>
         <li class="nav-item" onclick="switchTab('console', this)"><span>Engine Console</span></li>
@@ -417,24 +688,23 @@
     </div>
 
     <div class="sidebar-footer">
-      <div style="color: var(--text-secondary); margin-bottom: 4px;">Strategy Engine</div>
-      <div style="font-weight: 700; color: var(--mint);">4H/1H Donchian v4</div>
-      <div style="color: var(--text-secondary); font-size: 11px; margin-top: 4px;">1.2R Partial + 1.5R Trail</div>
+      <div style="color: var(--text-secondary); margin-bottom: 4px;">Active Scanner Scope</div>
+      <div style="font-weight: 700; color: var(--mint);" id="sideRiskSummary">6 Pairs • 1.00% Risk</div>
+      <div style="color: var(--text-secondary); font-size: 11px; margin-top: 4px;" id="sideMarketCount">Loading Bybit markets...</div>
     </div>
   </aside>
 
   <main class="main">
-    <!-- Top Bar -->
     <div class="top-header">
       <div class="account-chip">
         <div class="avatar">DK</div>
         <div>
           <div style="font-weight: 700; font-size: 14px;">Danglas Kimathi <span class="pro-tag">ALGO PRO</span></div>
-          <div style="font-size: 11.5px; color: var(--text-secondary);">Bybit Perpetuals • SQLite Synced</div>
+          <div style="font-size: 11.5px; color: var(--text-secondary);">Bybit Perpetuals • Live Price Sparklines & PnL Telemetry</div>
         </div>
       </div>
 
-      <input type="text" class="search-box" id="pairSearch" placeholder="Filter watchlist pair..." oninput="renderPairCards()" />
+      <input type="text" class="search-box" id="pairSearch" placeholder="Filter active cards..." oninput="renderPairCards()" />
 
       <div class="header-actions">
         <div class="status-badge" id="modeBadge">CONNECTING...</div>
@@ -443,11 +713,10 @@
       </div>
     </div>
 
-    <!-- Hero Portfolio Banner -->
     <div class="hero-banner">
       <div>
         <div style="font-size: 18px; font-weight: 700;">AlphaStrike Algorithmic Portfolio</div>
-        <div style="font-size: 12.5px; color: var(--text-secondary); margin-top: 4px;">6 High-Beta Perpetual Pairs • 1.0% Risk Per Trade • 5% Daily Circuit Breaker</div>
+        <div style="font-size: 12.5px; color: var(--text-secondary); margin-top: 4px;">Cards turn Crimson Red on drawdown • Hover any card chart to scrub live price ticks</div>
         <div class="hero-metrics">
           <div>
             <div class="hero-stat-label">Total Equity</div>
@@ -473,18 +742,94 @@
       </div>
     </div>
 
-    <!-- View Filter Pills -->
     <div class="section-bar">
-      <h2 style="margin: 0; font-size: 17px;">Watchlist Strategy Cards</h2>
+      <h2 style="margin: 0; font-size: 17px;" id="sectionHeading">Active Watchlist Cards <span style="font-size: 12px; color: var(--text-secondary); font-weight: 400;" id="watchlistCountLabel">(6 pairs scanned)</span></h2>
       <div class="filter-pills">
-        <button class="pill active" onclick="switchTab('overview', null, this)">All Pairs (6)</button>
+        <button class="pill active" onclick="switchTab('overview', null, this)">Watchlist Cards</button>
+        <button class="pill" onclick="switchTab('settings', null, this)">Add/Remove Pairs & Risk</button>
         <button class="pill" onclick="switchTab('positions', null, this)">Active Positions</button>
         <button class="pill" onclick="switchTab('ledger', null, this)">Closed History</button>
         <button class="pill" onclick="switchTab('console', null, this)">Live Logs</button>
       </div>
     </div>
 
-    <!-- 3-Column Pair Cards Grid -->
+    <!-- Watchlist Manager & Global Risk Panel -->
+    <div class="panel" id="panel-settings">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+          <h3 style="margin: 0; font-size: 15px;">Watchlist Manager & Global Risk Defaults</h3>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 3px;">All Bybit USDT perpetuals are available below — only pairs on your watchlist are scanned</div>
+        </div>
+        <button class="btn-mint" onclick="saveSettings()">Apply Global Defaults</button>
+      </div>
+
+      <div class="control-box" style="margin-bottom: 18px;">
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px;">
+          Add Any Bybit USDT Perpetual Pair to Watchlist <span style="color: var(--mint); font-size: 11.5px;" id="availableMarketBadge"></span>
+        </div>
+        <div class="market-adder-row">
+          <input type="text" class="market-search-input" id="exchangeMarketInput"
+            placeholder="Search any Bybit coin (e.g. BTC, XRP, PEPE, ARB, NEAR, TIA, RENDER)..."
+            oninput="filterExchangeMarkets()" onfocus="filterExchangeMarkets()" />
+          <button class="btn-mint" onclick="addMarketFromInput()">+ Add to Watchlist</button>
+          <div class="market-dropdown" id="exchangeMarketDropdown"></div>
+        </div>
+        <div style="font-size: 11.5px; color: var(--text-secondary); margin-bottom: 6px;">Currently Active on Watchlist (Click × to remove):</div>
+        <div class="toggle-chips" id="pairToggleChips"></div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="control-box">
+          <div class="control-header">
+            <span>Global Risk Per Trade</span>
+            <div class="num-input-wrap">
+              <input type="number" class="num-input" id="riskInput" min="0.1" max="5.0" step="0.05" value="1.00"
+                oninput="syncControl('risk', this.value)" />
+              <span class="num-unit">%</span>
+            </div>
+          </div>
+          <input type="range" id="riskSlider" min="0.1" max="5.0" step="0.05" value="1.00"
+            oninput="syncControl('risk', this.value)" />
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;" id="riskDollarPreview">
+            Max loss per trade: ~$1,000.00
+          </div>
+        </div>
+
+        <div class="control-box">
+          <div class="control-header">
+            <span>Max Concurrent Trades</span>
+            <div class="num-input-wrap">
+              <input type="number" class="num-input" id="maxPosInput" min="1" max="10" step="1" value="3"
+                oninput="syncControl('maxPos', this.value)" />
+              <span class="num-unit">Pairs</span>
+            </div>
+          </div>
+          <input type="range" id="maxPosSlider" min="1" max="10" step="1" value="3"
+            oninput="syncControl('maxPos', this.value)" />
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
+            Caps simultaneous open exposure across watchlist
+          </div>
+        </div>
+
+        <div class="control-box">
+          <div class="control-header">
+            <span>Global Target R:R</span>
+            <div class="num-input-wrap">
+              <input type="number" class="num-input" id="rrInput" min="1.0" max="5.0" step="0.1" value="2.5"
+                oninput="syncControl('rr', this.value)" />
+              <span class="num-unit">R</span>
+            </div>
+          </div>
+          <input type="range" id="rrSlider" min="1.0" max="5.0" step="0.1" value="2.5"
+            oninput="syncControl('rr', this.value)" />
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
+            50% partial closes at +1.2R; runner trails to target
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3-Column Dynamic Pair Cards Grid -->
     <div class="cards-grid" id="pairCardsGrid"></div>
 
     <!-- Active Positions Panel -->
@@ -495,7 +840,7 @@
           <tr><th>Pair</th><th>Side</th><th>Entry</th><th>Current</th><th>Stop Loss</th><th>Take Profit</th><th>Unrealized PnL</th></tr>
         </thead>
         <tbody id="posBody">
-          <tr><td colspan="7" style="color: var(--text-secondary);">Scanning 6 high-beta perpetual pairs...</td></tr>
+          <tr><td colspan="7" style="color: var(--text-secondary);">Scanning active watchlist pairs...</td></tr>
         </tbody>
       </table>
     </div>
@@ -520,17 +865,458 @@
     </div>
   </main>
 
+  <!-- Pair Inspection & Custom Parameter Slide-Over Drawer -->
+  <div class="drawer-backdrop" id="drawerBackdrop" onclick="closePairDrawer()"></div>
+  <aside class="pair-drawer" id="pairDrawer">
+    <div class="drawer-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="pair-icon" id="drawerIcon">SOL</div>
+        <div>
+          <div style="font-size: 18px; font-weight: 800;" id="drawerTitle">SOL/USDT Perpetual</div>
+          <div style="font-size: 12px; color: var(--text-secondary);" id="drawerSubtitle">Bybit Linear Perp • 4H/1H SMC Breakout</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-kill" style="padding: 7px 12px; font-size: 12px;" onclick="removeSelectedPairFromWatchlist()">Remove Pair</button>
+        <button class="btn-ghost" onclick="closePairDrawer()">✕</button>
+      </div>
+    </div>
+
+    <div class="drawer-kpis">
+      <div class="kpi-tile">
+        <div class="kpi-tile-label">Live Market Price</div>
+        <div class="kpi-tile-val" id="drawerLivePrice">—</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-tile-label">Pair Net Realized PnL</div>
+        <div class="kpi-tile-val pos" id="drawerNetPnl">$0.00</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-tile-label">Pair Win Rate</div>
+        <div class="kpi-tile-val" id="drawerWinRate">0%</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-tile-label">Executed Trades</div>
+        <div class="kpi-tile-val" id="drawerTradeCount">0</div>
+      </div>
+    </div>
+
+    <div class="drawer-section" id="drawerActivePosSection">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h4 style="margin: 0; font-size: 14px;">Open Position Telemetry</h4>
+        <span class="card-badge idle" id="drawerPosStatus">NO OPEN TRADE</span>
+      </div>
+      <div id="drawerPosContent" style="font-size: 13px; color: var(--text-secondary);">
+        Currently flat on this pair. Engine is monitoring 4H trend & 1H Donchian breakout triggers.
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <h4 style="margin: 0; font-size: 14px;">Individual Pair Parameters</h4>
+          <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Customize risk & target specifically for this coin</div>
+        </div>
+        <button class="pair-chip" style="cursor: pointer;" id="drawerEnableBtn" onclick="toggleDrawerPairEnabled()">✓ Scanning Active</button>
+      </div>
+
+      <div class="control-box" style="margin-bottom: 12px;">
+        <div class="control-header">
+          <span>Pair Risk Per Trade</span>
+          <div class="num-input-wrap">
+            <input type="number" class="num-input" id="pairRiskInput" min="0.1" max="5.0" step="0.05" value="1.00"
+              oninput="syncPairControl('risk', this.value)" />
+            <span class="num-unit">%</span>
+          </div>
+        </div>
+        <input type="range" id="pairRiskSlider" min="0.1" max="5.0" step="0.05" value="1.00"
+          oninput="syncPairControl('risk', this.value)" />
+        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;" id="pairRiskDollarNote">
+          Risk per trade on this pair: ~$1,000.00
+        </div>
+      </div>
+
+      <div class="control-box" style="margin-bottom: 14px;">
+        <div class="control-header">
+          <span>Pair Target Reward-to-Risk</span>
+          <div class="num-input-wrap">
+            <input type="number" class="num-input" id="pairRrInput" min="1.0" max="5.0" step="0.1" value="2.5"
+              oninput="syncPairControl('rr', this.value)" />
+            <span class="num-unit">R</span>
+          </div>
+        </div>
+        <input type="range" id="pairRrSlider" min="1.0" max="5.0" step="0.1" value="2.5"
+          oninput="syncPairControl('rr', this.value)" />
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-mint" style="flex: 1;" onclick="savePairSettings()">Save Pair Parameters</button>
+        <button class="btn-ghost" onclick="resetPairSettings()">Reset to Global</button>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <h4 style="margin: 0 0 10px 0; font-size: 14px;">Pair Trade History</h4>
+      <table>
+        <thead>
+          <tr><th>Time (UTC)</th><th>Side</th><th>Entry → Exit</th><th>Reason</th><th>PnL</th></tr>
+        </thead>
+        <tbody id="drawerHistoryBody">
+          <tr><td colspan="5" style="color: var(--text-secondary);">No closed trades for this pair yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </aside>
+
   <script>
-    const WATCHLIST = [
-      { symbol: "AVAX/USDT:USDT", short: "AVAX", name: "Avalanche Perp" },
-      { symbol: "SOL/USDT:USDT", short: "SOL", name: "Solana Perp" },
-      { symbol: "ETH/USDT:USDT", short: "ETH", name: "Ethereum Perp" },
-      { symbol: "LINK/USDT:USDT", short: "LINK", name: "Chainlink Perp" },
-      { symbol: "SUI/USDT:USDT", short: "SUI", name: "Sui Network Perp" },
-      { symbol: "DOGE/USDT:USDT", short: "DOGE", name: "Dogecoin Perp" }
+    let allExchangeMarkets = [];
+    let currentWatchlist = [
+      "AVAX/USDT:USDT",
+      "SOL/USDT:USDT",
+      "ETH/USDT:USDT",
+      "LINK/USDT:USDT",
+      "SUI/USDT:USDT",
+      "DOGE/USDT:USDT"
     ];
 
-    let latestData = { positions: [], history: [], equity_curve: [] };
+    let latestData = {
+      balance: 100000,
+      positions: [],
+      history: [],
+      equity_curve: [],
+      latest_prices: {},
+      price_history: {},
+      pair_settings: {}
+    };
+    let settingsInitialized = false;
+    let selectedSymbol = null;
+    let drawerEnabledState = true;
+    let activeSparkHover = null; // { symbol, index }
+
+    function formatPrice(px) {
+      if (px === undefined || px === null || isNaN(px)) return "—";
+      if (px < 0.01) return "$" + px.toFixed(6);
+      if (px < 10) return "$" + px.toFixed(4);
+      return "$" + px.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    async function fetchAllExchangeMarkets() {
+      try {
+        const res = await fetch("/api/markets");
+        const data = await res.json();
+        if (data.markets && data.markets.length > 0) {
+          allExchangeMarkets = data.markets;
+          document.getElementById("availableMarketBadge").innerText = `(${allExchangeMarkets.length} Bybit Perps Loaded)`;
+          document.getElementById("sideMarketCount").innerText = `${allExchangeMarkets.length} Bybit Perps Available`;
+        }
+      } catch (e) {
+        console.error("Market fetch note:", e);
+      }
+    }
+
+    function getMarketMeta(symbol) {
+      const found = allExchangeMarkets.find(m => m.symbol === symbol);
+      if (found) return found;
+      const short = symbol.split("/")[0];
+      return { symbol, short, name: `${short} Perpetual` };
+    }
+
+    function filterExchangeMarkets() {
+      const input = document.getElementById("exchangeMarketInput");
+      const dropdown = document.getElementById("exchangeMarketDropdown");
+      const q = input.value.trim().toUpperCase();
+
+      if (!q) {
+        dropdown.classList.remove("open");
+        return;
+      }
+
+      const pool = allExchangeMarkets.length > 0
+        ? allExchangeMarkets
+        : currentWatchlist.map(getMarketMeta);
+
+      const matches = pool
+        .filter(m => m.short.includes(q) || m.symbol.includes(q))
+        .slice(0, 15);
+
+      if (matches.length === 0) {
+        dropdown.innerHTML = `<div style="padding:10px 14px; color:var(--text-secondary); font-size:12.5px;">No matching USDT perpetual found for "${q}"</div>`;
+      } else {
+        dropdown.innerHTML = matches.map(m => {
+          const alreadyAdded = currentWatchlist.includes(m.symbol);
+          return `
+            <div class="market-option" onclick="selectMarketToAdd('${m.symbol}')">
+              <div>
+                <b>${m.short}/USDT</b>
+                <span style="color:var(--text-secondary); font-size:11px; margin-left:6px;">${m.symbol}</span>
+              </div>
+              <span style="font-size:11px; font-weight:700; color:${alreadyAdded ? 'var(--text-secondary)' : 'var(--mint)'};">
+                ${alreadyAdded ? 'IN WATCHLIST' : '+ ADD'}
+              </span>
+            </div>
+          `;
+        }).join("");
+      }
+      dropdown.classList.add("open");
+    }
+
+    async function selectMarketToAdd(symbol) {
+      document.getElementById("exchangeMarketDropdown").classList.remove("open");
+      document.getElementById("exchangeMarketInput").value = "";
+      await modifyWatchlist(symbol, "add");
+    }
+
+    async function addMarketFromInput() {
+      const raw = document.getElementById("exchangeMarketInput").value.trim().toUpperCase();
+      if (!raw) return;
+      document.getElementById("exchangeMarketDropdown").classList.remove("open");
+      document.getElementById("exchangeMarketInput").value = "";
+      await modifyWatchlist(raw, "add");
+    }
+
+    async function modifyWatchlist(symbol, action) {
+      const res = await fetch("/api/watchlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol, action })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentWatchlist = data.watchlist;
+        renderWatchlistChips();
+        renderPairCards();
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Could not update watchlist");
+      }
+    }
+
+    async function removeSelectedPairFromWatchlist() {
+      if (!selectedSymbol) return;
+      const sym = selectedSymbol;
+      closePairDrawer();
+      await modifyWatchlist(sym, "remove");
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".market-adder-row")) {
+        document.getElementById("exchangeMarketDropdown").classList.remove("open");
+      }
+    });
+
+    function syncControl(type, rawVal) {
+      const val = parseFloat(rawVal);
+      if (isNaN(val)) return;
+      if (type === "risk") {
+        document.getElementById("riskInput").value = rawVal;
+        document.getElementById("riskSlider").value = Math.min(5.0, Math.max(0.1, val));
+        updateRiskDollarPreview();
+      } else if (type === "maxPos") {
+        const intVal = Math.round(val);
+        document.getElementById("maxPosInput").value = intVal;
+        document.getElementById("maxPosSlider").value = Math.min(10, Math.max(1, intVal));
+      } else if (type === "rr") {
+        document.getElementById("rrInput").value = rawVal;
+        document.getElementById("rrSlider").value = Math.min(5.0, Math.max(1.0, val));
+      }
+    }
+
+    function syncPairControl(type, rawVal) {
+      const val = parseFloat(rawVal);
+      if (isNaN(val)) return;
+      if (type === "risk") {
+        document.getElementById("pairRiskInput").value = rawVal;
+        document.getElementById("pairRiskSlider").value = Math.min(5.0, Math.max(0.1, val));
+        const dollarRisk = (latestData.balance || 100000) * (val / 100.0);
+        document.getElementById("pairRiskDollarNote").innerText = `Risk per trade on this pair: ~$${dollarRisk.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      } else if (type === "rr") {
+        document.getElementById("pairRrInput").value = rawVal;
+        document.getElementById("pairRrSlider").value = Math.min(5.0, Math.max(1.0, val));
+      }
+    }
+
+    function openPairDrawer(symbol) {
+      selectedSymbol = symbol;
+      const meta = getMarketMeta(symbol);
+      const pCfg = (latestData.pair_settings && latestData.pair_settings[symbol]) || {
+        enabled: true,
+        risk_per_trade_pct: (parseFloat(document.getElementById("riskInput").value) || 1.0) / 100.0,
+        reward_to_risk: parseFloat(document.getElementById("rrInput").value) || 2.5
+      };
+
+      document.getElementById("drawerIcon").innerText = meta.short.slice(0, 4);
+      document.getElementById("drawerTitle").innerText = `${meta.short}/USDT Perpetual`;
+      document.getElementById("drawerSubtitle").innerText = `${symbol} • 4H/1H SMC Breakout`;
+
+      drawerEnabledState = pCfg.enabled;
+      updateDrawerEnableButton();
+
+      const rPct = (pCfg.risk_per_trade_pct * 100).toFixed(2);
+      document.getElementById("pairRiskInput").value = rPct;
+      document.getElementById("pairRiskSlider").value = rPct;
+      syncPairControl("risk", rPct);
+
+      document.getElementById("pairRrInput").value = pCfg.reward_to_risk.toFixed(1);
+      document.getElementById("pairRrSlider").value = pCfg.reward_to_risk;
+
+      renderDrawerLiveData();
+      document.getElementById("drawerBackdrop").classList.add("open");
+      document.getElementById("pairDrawer").classList.add("open");
+    }
+
+    function closePairDrawer() {
+      selectedSymbol = null;
+      document.getElementById("drawerBackdrop").classList.remove("open");
+      document.getElementById("pairDrawer").classList.remove("open");
+    }
+
+    function toggleDrawerPairEnabled() {
+      drawerEnabledState = !drawerEnabledState;
+      updateDrawerEnableButton();
+    }
+
+    function updateDrawerEnableButton() {
+      const btn = document.getElementById("drawerEnableBtn");
+      btn.className = `pair-chip ${drawerEnabledState ? "" : "off"}`;
+      btn.innerText = drawerEnabledState ? "✓ Scanning Active" : "✕ Scanning Paused";
+    }
+
+    async function savePairSettings() {
+      if (!selectedSymbol) return;
+      const riskVal = Math.min(5.0, Math.max(0.1, parseFloat(document.getElementById("pairRiskInput").value) || 1.0));
+      const rrVal = Math.min(5.0, Math.max(1.0, parseFloat(document.getElementById("pairRrInput").value) || 2.5));
+
+      await fetch("/api/pair-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: selectedSymbol,
+          enabled: drawerEnabledState,
+          risk_per_trade: riskVal / 100.0,
+          reward_to_risk: rrVal
+        })
+      });
+    }
+
+    async function resetPairSettings() {
+      if (!selectedSymbol) return;
+      await fetch("/api/pair-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol: selectedSymbol, reset_to_global: true })
+      });
+      setTimeout(() => { if (selectedSymbol) openPairDrawer(selectedSymbol); }, 350);
+    }
+
+    async function closeSinglePosition(symbol) {
+      await fetch("/api/close-position", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol })
+      });
+    }
+
+    function renderDrawerLiveData() {
+      if (!selectedSymbol) return;
+      const activePos = latestData.positions.find(p => p.symbol === selectedSymbol);
+      const livePx = (activePos && activePos.current_price) || (latestData.latest_prices && latestData.latest_prices[selectedSymbol]);
+      document.getElementById("drawerLivePrice").innerText = livePx ? formatPrice(livePx) : "Scanning...";
+
+      const pairTrades = latestData.history.filter(h => h.symbol === selectedSymbol);
+      const netPnl = pairTrades.reduce((acc, t) => acc + t.pnl, 0);
+      const wins = pairTrades.filter(t => t.pnl > 0).length;
+      const winRate = pairTrades.length ? Math.round((wins / pairTrades.length) * 100) : 0;
+
+      const pnlEl = document.getElementById("drawerNetPnl");
+      pnlEl.innerText = `${netPnl >= 0 ? "+" : ""}$${netPnl.toFixed(2)}`;
+      pnlEl.className = `kpi-tile-val ${netPnl >= 0 ? "pos" : "neg"}`;
+      document.getElementById("drawerWinRate").innerText = `${winRate}%`;
+      document.getElementById("drawerTradeCount").innerText = pairTrades.length;
+
+      const posBadge = document.getElementById("drawerPosStatus");
+      const posContent = document.getElementById("drawerPosContent");
+      if (activePos) {
+        posBadge.className = "card-badge";
+        posBadge.innerText = `${activePos.side} ACTIVE`;
+        posContent.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; color: var(--text-primary);">
+            <div><span style="color:var(--text-secondary); font-size:11px;">ENTRY PRICE</span><br><b>$${activePos.entry.toFixed(4)}</b></div>
+            <div><span style="color:var(--text-secondary); font-size:11px;">POSITION SIZE</span><br><b>${activePos.qty}</b></div>
+            <div><span style="color:var(--text-secondary); font-size:11px;">STOP LOSS</span><br><b>$${activePos.sl.toFixed(4)} ${activePos.be_locked ? '(TRAIL)' : ''}</b></div>
+            <div><span style="color:var(--text-secondary); font-size:11px;">TAKE PROFIT</span><br><b>$${activePos.tp.toFixed(4)}</b></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+            <div>Floating PnL: <b class="${activePos.unrealized_pnl >= 0 ? 'pos' : 'neg'}">${activePos.unrealized_pnl >= 0 ? '+' : ''}$${activePos.unrealized_pnl.toFixed(2)}</b></div>
+            <button class="btn-kill" style="padding: 6px 12px; font-size: 12px;" onclick="closeSinglePosition('${selectedSymbol}')">Close Position Now</button>
+          </div>
+        `;
+      } else {
+        posBadge.className = "card-badge idle";
+        posBadge.innerText = "NO OPEN TRADE";
+        posContent.innerHTML = `<div style="color: var(--text-secondary);">Currently flat on this pair. Engine is monitoring 4H trend & 1H Donchian breakout triggers.</div>`;
+      }
+
+      const histBody = document.getElementById("drawerHistoryBody");
+      histBody.innerHTML = pairTrades.length ? pairTrades.map(h => `
+        <tr>
+          <td style="color: var(--text-secondary); font-size: 11.5px;">${h.closed_at.split(" ")[1] || h.closed_at}</td>
+          <td>${h.side}</td>
+          <td>$${h.entry.toFixed(3)} → $${h.exit.toFixed(3)}</td>
+          <td style="font-size: 11.5px;">${h.reason}</td>
+          <td class="${h.pnl >= 0 ? 'pos' : 'neg'}"><b>${h.pnl >= 0 ? '+' : ''}$${h.pnl.toFixed(2)}</b></td>
+        </tr>
+      `).join("") : `<tr><td colspan="5" style="color: var(--text-secondary);">No closed trades for this pair yet.</td></tr>`;
+    }
+
+    function renderWatchlistChips() {
+      const container = document.getElementById("pairToggleChips");
+      container.innerHTML = currentWatchlist.map(sym => {
+        const meta = getMarketMeta(sym);
+        const pCfg = (latestData.pair_settings && latestData.pair_settings[sym]) || { enabled: true };
+        return `
+          <span class="pair-chip ${pCfg.enabled ? '' : 'off'}">
+            <span style="cursor:pointer;" onclick="openPairDrawer('${sym}')">${meta.short}/USDT</span>
+            <span class="chip-x" title="Remove from watchlist" onclick="modifyWatchlist('${sym}', 'remove')">×</span>
+          </span>
+        `;
+      }).join("");
+      document.getElementById("watchlistCountLabel").innerText = `(${currentWatchlist.length} pairs scanned)`;
+    }
+
+    async function saveSettings() {
+      const riskInputVal = Math.min(5.0, Math.max(0.1, parseFloat(document.getElementById("riskInput").value) || 1.0));
+      const maxPosVal = Math.min(10, Math.max(1, parseInt(document.getElementById("maxPosInput").value, 10) || 3));
+      const rrVal = Math.min(5.0, Math.max(1.0, parseFloat(document.getElementById("rrInput").value) || 2.5));
+
+      document.getElementById("riskInput").value = riskInputVal.toFixed(2);
+      document.getElementById("riskSlider").value = riskInputVal;
+      document.getElementById("maxPosInput").value = maxPosVal;
+      document.getElementById("maxPosSlider").value = maxPosVal;
+      document.getElementById("rrInput").value = rrVal.toFixed(1);
+      document.getElementById("rrSlider").value = rrVal;
+
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          risk_per_trade: riskInputVal / 100.0,
+          max_open_positions: maxPosVal,
+          reward_to_risk: rrVal,
+          watchlist: currentWatchlist
+        })
+      });
+
+      if (res.ok) {
+        document.getElementById("sideRiskSummary").innerText = `${currentWatchlist.length} Pairs • ${riskInputVal.toFixed(2)}% Risk`;
+        updateRiskDollarPreview();
+      }
+    }
+
+    function updateRiskDollarPreview() {
+      const riskPct = (parseFloat(document.getElementById("riskInput").value) || 0) / 100.0;
+      const dollarRisk = (latestData.balance || 100000) * riskPct;
+      document.getElementById("riskDollarPreview").innerText = `Max loss per trade: ~$${dollarRisk.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
 
     function switchTab(tab, navEl, pillEl) {
       if (navEl) {
@@ -543,91 +1329,201 @@
       }
 
       const grid = document.getElementById("pairCardsGrid");
+      const pSet = document.getElementById("panel-settings");
       const pPos = document.getElementById("panel-positions");
       const pLed = document.getElementById("panel-ledger");
       const pCon = document.getElementById("panel-console");
 
-      if (tab === "overview") {
-        grid.style.display = "grid";
-        pPos.classList.remove("hidden");
-        pLed.classList.remove("hidden");
-        pCon.classList.remove("hidden");
-      } else if (tab === "positions") {
-        grid.style.display = "none";
-        pPos.classList.remove("hidden");
-        pLed.classList.add("hidden");
-        pCon.classList.add("hidden");
-      } else if (tab === "ledger") {
-        grid.style.display = "none";
-        pPos.classList.add("hidden");
-        pLed.classList.remove("hidden");
-        pCon.classList.add("hidden");
-      } else if (tab === "console") {
-        grid.style.display = "none";
-        pPos.classList.add("hidden");
-        pLed.classList.add("hidden");
-        pCon.classList.remove("hidden");
+      grid.style.display = tab === "overview" ? "grid" : "none";
+      pSet.classList.toggle("hidden", tab !== "overview" && tab !== "settings");
+      pPos.classList.toggle("hidden", tab !== "overview" && tab !== "positions");
+      pLed.classList.toggle("hidden", tab !== "overview" && tab !== "ledger");
+      pCon.classList.toggle("hidden", tab !== "overview" && tab !== "console");
+    }
+
+    /* Interactive Live Price Sparkline + Scrubbing */
+    function handleSparkMove(event, symbol) {
+      event.stopPropagation();
+      const wrap = event.currentTarget;
+      const prices = (latestData.price_history && latestData.price_history[symbol]) || [];
+      if (prices.length < 2) return;
+
+      const rect = wrap.getBoundingClientRect();
+      const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+      const idx = Math.min(prices.length - 1, Math.round(ratio * (prices.length - 1)));
+      activeSparkHover = { symbol, idx };
+
+      const tooltip = wrap.querySelector(".spark-tooltip");
+      const cursorLine = wrap.querySelector(".spark-cursor");
+      const cursorDot = wrap.querySelector(".spark-hover-dot");
+
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      const range = max - min || (min * 0.001) || 1;
+      const x = (idx / (prices.length - 1)) * 124 + 6;
+      const y = 40 - ((prices[idx] - min) / range) * 32;
+
+      if (tooltip) {
+        tooltip.style.display = "block";
+        tooltip.innerText = formatPrice(prices[idx]);
+      }
+      if (cursorLine) {
+        cursorLine.setAttribute("x1", x.toFixed(1));
+        cursorLine.setAttribute("x2", x.toFixed(1));
+        cursorLine.style.display = "block";
+      }
+      if (cursorDot) {
+        cursorDot.setAttribute("cx", x.toFixed(1));
+        cursorDot.setAttribute("cy", y.toFixed(1));
+        cursorDot.style.display = "block";
       }
     }
 
-    function buildSparkline(trades, isPositive) {
-      const color = isPositive ? "#00e5b0" : "#ef4444";
-      if (!trades || trades.length < 2) {
-        return `<svg class="sparkline" viewBox="0 0 120 44"><path d="M4,28 Q30,22 60,25 T116,18" fill="none" stroke="${color}" stroke-width="2.5" stroke-opacity="0.55"/></svg>`;
+    function handleSparkLeave(event) {
+      event.stopPropagation();
+      activeSparkHover = null;
+      const wrap = event.currentTarget;
+      const tooltip = wrap.querySelector(".spark-tooltip");
+      const cursorLine = wrap.querySelector(".spark-cursor");
+      const cursorDot = wrap.querySelector(".spark-hover-dot");
+      if (tooltip) tooltip.style.display = "none";
+      if (cursorLine) cursorLine.style.display = "none";
+      if (cursorDot) cursorDot.style.display = "none";
+    }
+
+    function buildInteractivePriceSparkline(symbol, isLoss, activePos) {
+      const strokeColor = isLoss ? "#ef4444" : "#00e5b0";
+      const gradId = `grad_${symbol.replace(/[^a-zA-Z0-9]/g, "")}`;
+      const rawPrices = (latestData.price_history && latestData.price_history[symbol]) || [];
+
+      if (rawPrices.length < 2) {
+        return `
+          <div class="spark-wrap" onclick="event.stopPropagation()">
+            <svg class="sparkline" viewBox="0 0 136 48">
+              <path d="M6,26 Q38,22 68,25 T130,22" fill="none" stroke="${strokeColor}" stroke-width="2.2" stroke-opacity="0.45" stroke-dasharray="3,3"/>
+            </svg>
+          </div>
+        `;
       }
-      let cum = 0;
-      const pts = [0, ...trades.slice().reverse().map(t => (cum += t.pnl))];
-      const min = Math.min(...pts);
-      const max = Math.max(...pts);
-      const range = max - min || 1;
-      const coords = pts.map((v, i) => {
-        const x = (i / (pts.length - 1)) * 112 + 4;
-        const y = 38 - ((v - min) / range) * 30;
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
-      }).join(" ");
-      return `<svg class="sparkline" viewBox="0 0 120 44"><polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" points="${coords}"/></svg>`;
+
+      const prices = rawPrices.slice(-35);
+      const allVals = activePos ? [...prices, activePos.entry] : prices;
+      const min = Math.min(...allVals);
+      const max = Math.max(...allVals);
+      const range = max - min || (min * 0.001) || 1;
+
+      const coordsArr = prices.map((v, i) => {
+        const x = (i / (prices.length - 1)) * 124 + 6;
+        const y = 40 - ((v - min) / range) * 32;
+        return { x, y, val: v };
+      });
+
+      const polyPoints = coordsArr.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
+      const lastPt = coordsArr[coordsArr.length - 1];
+
+      // Optional Entry Line when an active position exists
+      let entryLineSvg = "";
+      if (activePos) {
+        const entryY = 40 - ((activePos.entry - min) / range) * 32;
+        entryLineSvg = `<line x1="6" y1="${entryY.toFixed(1)}" x2="130" y2="${entryY.toFixed(1)}" stroke="#f59e0b" stroke-width="1" stroke-dasharray="2.5,2.5" stroke-opacity="0.75"/>`;
+      }
+
+      // Preserve hover scrub state across 2s WebSocket re-renders
+      let hoverVal = "";
+      let hoverDisplay = "none";
+      let hoverX = lastPt.x.toFixed(1);
+      let hoverY = lastPt.y.toFixed(1);
+      if (activeSparkHover && activeSparkHover.symbol === symbol && coordsArr[activeSparkHover.idx]) {
+        const hPt = coordsArr[activeSparkHover.idx];
+        hoverVal = formatPrice(hPt.val);
+        hoverDisplay = "block";
+        hoverX = hPt.x.toFixed(1);
+        hoverY = hPt.y.toFixed(1);
+      }
+
+      return `
+        <div class="spark-wrap"
+          onmousemove="handleSparkMove(event, '${symbol}')"
+          onmouseleave="handleSparkLeave(event)"
+          onclick="event.stopPropagation()">
+          <div class="spark-tooltip" style="display:${hoverDisplay};">${hoverVal}</div>
+          <svg class="sparkline" viewBox="0 0 136 48">
+            <defs>
+              <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.32"/>
+                <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            <polygon fill="url(#${gradId})" points="6,46 ${polyPoints} 130,46"/>
+            ${entryLineSvg}
+            <polyline fill="none" stroke="${strokeColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${polyPoints}"/>
+            <line class="spark-cursor" x1="${hoverX}" y1="4" x2="${hoverX}" y2="44" stroke="#f8fafc" stroke-width="1" stroke-opacity="0.5" style="display:${hoverDisplay};"/>
+            <circle class="spark-hover-dot" cx="${hoverX}" cy="${hoverY}" r="3.2" fill="#fff" stroke="${strokeColor}" stroke-width="1.5" style="display:${hoverDisplay};"/>
+            <circle class="live-pulse-dot" cx="${lastPt.x.toFixed(1)}" cy="${lastPt.y.toFixed(1)}" r="3.2" fill="${strokeColor}"/>
+          </svg>
+        </div>
+      `;
     }
 
     function renderPairCards() {
       const query = document.getElementById("pairSearch").value.toLowerCase();
       const grid = document.getElementById("pairCardsGrid");
 
-      grid.innerHTML = WATCHLIST.filter(w =>
+      grid.innerHTML = currentWatchlist.map(sym => getMarketMeta(sym)).filter(w =>
         w.short.toLowerCase().includes(query) || w.name.toLowerCase().includes(query)
       ).map(w => {
+        const pCfg = (latestData.pair_settings && latestData.pair_settings[w.symbol]) || { enabled: true };
+        const isEnabled = pCfg.enabled !== false;
         const activePos = latestData.positions.find(p => p.symbol === w.symbol);
+        const livePx = (activePos && activePos.current_price) || (latestData.latest_prices && latestData.latest_prices[w.symbol]);
         const pairTrades = latestData.history.filter(h => h.symbol === w.symbol);
         const realizedPnl = pairTrades.reduce((acc, t) => acc + t.pnl, 0);
+        const floatingPnl = activePos ? activePos.unrealized_pnl : 0;
+        const netCardPnl = realizedPnl + floatingPnl;
+
         const wins = pairTrades.filter(t => t.pnl > 0).length;
         const winRate = pairTrades.length ? Math.round((wins / pairTrades.length) * 100) : 0;
-        const isPos = realizedPnl >= 0;
+
+        // Card turns red if active trade is in drawdown OR net pair PnL is negative
+        const isLoss = activePos ? (floatingPnl < 0) : (realizedPnl < 0);
+
+        let badgeText = isEnabled ? "SCANNING" : "PAUSED";
+        if (activePos) badgeText = activePos.side;
 
         return `
-          <div class="pair-card">
+          <div class="pair-card ${isLoss ? 'in-loss' : ''} ${isEnabled ? '' : 'disabled-pair'}" onclick="openPairDrawer('${w.symbol}')">
             <div class="pair-card-top">
               <div class="pair-info">
-                <div class="pair-icon">${w.short.slice(0, 3)}</div>
+                <div class="pair-icon">${w.short.slice(0, 4)}</div>
                 <div>
-                  <div class="pair-name">${w.short}/USDT</div>
-                  <div class="pair-sub">${w.name}</div>
+                  <div class="pair-name">
+                    ${w.short}/USDT
+                    ${pCfg.is_custom ? '<span class="custom-dot">CUSTOM</span>' : ''}
+                  </div>
+                  <div class="pair-sub">${livePx ? formatPrice(livePx) : w.name}</div>
                 </div>
               </div>
-              <span class="card-badge ${activePos ? '' : 'idle'}">${activePos ? activePos.side : 'SCANNING'}</span>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="card-badge ${activePos ? '' : 'idle'}">${badgeText}</span>
+                <button class="card-remove-btn" title="Remove pair" onclick="event.stopPropagation(); modifyWatchlist('${w.symbol}', 'remove')">×</button>
+              </div>
             </div>
 
             <div class="pair-mid">
               <div>
-                <div class="roi-label">Realized PnL</div>
-                <div class="roi-val ${isPos ? 'pos' : 'neg'}">${isPos ? '+' : ''}$${realizedPnl.toFixed(2)}</div>
+                <div class="roi-label">${activePos ? 'Active Trade PnL' : 'Net Pair PnL'}</div>
+                <div class="roi-val ${isLoss ? 'neg' : 'pos'}">
+                  ${(activePos ? floatingPnl : netCardPnl) >= 0 ? '+' : ''}$${(activePos ? floatingPnl : netCardPnl).toFixed(2)}
+                </div>
               </div>
-              ${buildSparkline(pairTrades, isPos)}
+              ${buildInteractivePriceSparkline(w.symbol, isLoss, activePos)}
             </div>
 
             <div class="pair-footer">
               <div>
-                <div class="pf-label">Floating</div>
-                <div class="pf-val ${activePos && activePos.unrealized_pnl < 0 ? 'neg' : 'pos'}">
-                  ${activePos ? (activePos.unrealized_pnl >= 0 ? '+' : '') + '$' + activePos.unrealized_pnl.toFixed(2) : '$0.00'}
+                <div class="pf-label">Realized</div>
+                <div class="pf-val ${realizedPnl < 0 ? 'neg' : 'pos'}">
+                  ${realizedPnl >= 0 ? '+' : ''}$${realizedPnl.toFixed(2)}
                 </div>
               </div>
               <div>
@@ -678,6 +1574,29 @@
       const data = JSON.parse(event.data);
       latestData = data;
 
+      if (data.settings && data.settings.watchlist) {
+        currentWatchlist = data.settings.watchlist;
+      }
+
+      if (data.market_count && allExchangeMarkets.length === 0) {
+        fetchAllExchangeMarkets();
+      }
+
+      if (!settingsInitialized && data.settings) {
+        const rPct = (data.settings.risk_per_trade * 100).toFixed(2);
+        document.getElementById("riskInput").value = rPct;
+        document.getElementById("riskSlider").value = rPct;
+        document.getElementById("maxPosInput").value = data.settings.max_open_positions;
+        document.getElementById("maxPosSlider").value = data.settings.max_open_positions;
+        document.getElementById("rrInput").value = data.settings.reward_to_risk.toFixed(1);
+        document.getElementById("rrSlider").value = data.settings.reward_to_risk;
+        settingsInitialized = true;
+      }
+
+      const activeRisk = (parseFloat(document.getElementById("riskInput").value) || 1.0).toFixed(2);
+      document.getElementById("sideRiskSummary").innerText = `${currentWatchlist.length} Pairs • ${activeRisk}% Risk`;
+      updateRiskDollarPreview();
+
       const badge = document.getElementById("modeBadge");
       badge.className = `status-badge ${data.is_running ? "" : "halted"}`;
       badge.innerText = `${data.mode} • ${data.is_running ? "ACTIVE" : "HALTED"}`;
@@ -692,11 +1611,13 @@
       upnlEl.className = `hero-stat-val ${data.unrealized_pnl >= 0 ? "pos" : "neg"}`;
 
       renderEquityChart(data.equity_curve);
+      renderWatchlistChips();
       renderPairCards();
+      if (selectedSymbol) renderDrawerLiveData();
 
       const posBody = document.getElementById("posBody");
       posBody.innerHTML = data.positions.length ? data.positions.map(p => `
-        <tr>
+        <tr style="cursor:pointer;" onclick="openPairDrawer('${p.symbol}')">
           <td><b>${p.symbol}</b></td>
           <td class="${p.side.includes('LONG') ? 'pos' : 'neg'}"><b>${p.side}</b></td>
           <td>$${p.entry.toFixed(4)}</td>
@@ -705,7 +1626,7 @@
           <td>$${p.tp.toFixed(4)}</td>
           <td class="${p.unrealized_pnl >= 0 ? 'pos' : 'neg'}"><b>$${p.unrealized_pnl.toFixed(2)}</b></td>
         </tr>
-      `).join("") : `<tr><td colspan="7" style="color: var(--text-secondary);">No open positions — scanning 6 high-beta perpetual pairs...</td></tr>`;
+      `).join("") : `<tr><td colspan="7" style="color: var(--text-secondary);">No open positions — scanning ${currentWatchlist.length} watchlist pairs...</td></tr>`;
 
       const histBody = document.getElementById("histBody");
       histBody.innerHTML = data.history.length ? data.history.map(h => `
@@ -723,6 +1644,8 @@
       document.getElementById("logBox").innerHTML = data.logs.map(l => `<div>${l}</div>`).join("");
     };
 
+    fetchAllExchangeMarkets();
+    renderWatchlistChips();
     renderPairCards();
   </script>
 </body>

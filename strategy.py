@@ -49,7 +49,7 @@ def prepare_indicators(df: pd.DataFrame) -> pd.DataFrame:
     df["vol_ma"] = df["volume"].rolling(24).mean()
     return df
 
-def evaluate_smart_breakout(
+def evaluate_smc_setup(
     symbol: str,
     htf_df: pd.DataFrame,
     ltf_df: pd.DataFrame,
@@ -141,3 +141,6 @@ def evaluate_smart_breakout(
             )
 
     return None
+
+# Backwards compatibility alias
+evaluate_smart_breakout = evaluate_smc_setup

@@ -229,4 +229,4 @@ def run_backtest(days: int = 90):
 
 
 if __name__ == "__main__":
-    run_backtest(days=90)
+    run_backtest(days=360)

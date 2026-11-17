@@ -24,7 +24,10 @@ class BotConfig:
         "ETH/USDT:USDT",
         "LINK/USDT:USDT",
         "SUI/USDT:USDT",
-        "DOGE/USDT:USDT"
+        "DOGE/USDT:USDT",
+        "XAU/USDT:USDT",
+        "XRP/USDT:USDT",
+        "AAVE/USDT:USDT"
     ])
 
     # Per-pair custom overrides: {"SOL/USDT:USDT": {"risk_per_trade_pct": 0.015, "reward_to_risk": 3.0, "enabled": True}}

@@ -6,7 +6,7 @@ from typing import Optional
 @dataclass
 class TradeSignal:
     symbol: str
-    side: str          # "LONG" or "SHORT"
+    side: str            # "LONG" or "SHORT"
     entry_price: float
     stop_loss: float
     take_profit: float
@@ -31,6 +31,7 @@ def compute_adx(df: pd.DataFrame, period: int = 14) -> pd.Series:
     return dx.ewm(alpha=1 / period, adjust=False).mean()
 
 def prepare_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
     df["ema_50"] = df["close"].ewm(span=50, adjust=False).mean()
     df["ema_200"] = df["close"].ewm(span=200, adjust=False).mean()
     df["adx"] = compute_adx(df, 14)
@@ -42,77 +43,101 @@ def prepare_indicators(df: pd.DataFrame) -> pd.DataFrame:
     ], axis=1).max(axis=1)
     df["atr"] = tr.rolling(14).mean()
 
-    # 24-hour Donchian Breakout Channels (prior 24 closed 1h candles)
+    # 24-hour Donchian Breakout Channels (prior 24 closed candles)
     df["donchian_high"] = df["high"].shift(1).rolling(24).max()
     df["donchian_low"] = df["low"].shift(1).rolling(24).min()
     df["vol_ma"] = df["volume"].rolling(24).mean()
     return df
 
-def evaluate_smc_setup(
+def evaluate_smart_breakout(
     symbol: str,
     htf_df: pd.DataFrame,
     ltf_df: pd.DataFrame,
     rr_ratio: float = 2.5
 ) -> Optional[TradeSignal]:
-    htf = prepare_indicators(htf_df.copy())
-    ltf = prepare_indicators(ltf_df.copy())
-
-    if len(ltf) < 40 or len(htf) < 200:
+    """
+    Evaluates market data using a multi-timeframe approach with scoring confluence
+    and structural risk management.
+    """
+    if len(ltf_df) < 40 or len(htf_df) < 200:
         return None
+
+    htf = prepare_indicators(htf_df)
+    ltf = prepare_indicators(ltf_df)
 
     htf_last = htf.iloc[-1]
-    c_prev = ltf.iloc[-2]  # Closed breakout candle
-    c_curr = ltf.iloc[-1]
+    c_prev = ltf.iloc[-2]  # Closed candle for signal evaluation
+    c_curr = ltf.iloc[-1]  # Current live candle for execution price
 
-    # Macro 4H alignment + ADX > 22 ensures market is trending, not stuck in sideways chop
+    # Macro trend filters
     htf_bullish = (htf_last["close"] > htf_last["ema_50"]) and (htf_last["ema_50"] > htf_last["ema_200"])
     htf_bearish = (htf_last["close"] < htf_last["ema_50"]) and (htf_last["ema_50"] < htf_last["ema_200"])
-    strong_trend = c_prev["adx"] > 22
-
+    
     atr = c_prev["atr"]
-    if pd.isna(atr) or atr <= 0 or not strong_trend:
+    if pd.isna(atr) or atr <= 0:
         return None
 
-    # BULLISH MOMENTUM BREAKOUT:
-    # 1H candle closes decisively above 24-hour high with strong volume surge
-    if htf_bullish:
-        breakout_up = c_prev["close"] > c_prev["donchian_high"]
-        strong_body = c_prev["close"] > c_prev["open"]
-        volume_surge = c_prev["volume"] > (c_prev["vol_ma"] * 1.4)
+    # ==========================
+    # BULLISH SETUP (LONG)
+    # ==========================
+    if htf_bullish and c_prev["adx"] > 20:
+        score = 0
+        if c_prev["close"] > c_prev["donchian_high"]: score += 2
+        if c_prev["close"] > c_prev["open"]: score += 1
+        if c_prev["volume"] > (c_prev["vol_ma"] * 1.2): score += 1
+        if c_prev["adx"] > 25: score += 1
 
-        if breakout_up and strong_body and volume_surge:
+        # Requires accumulated confluence score >= 3 out of 5
+        if score >= 3:
             entry = float(c_curr["close"])
-            sl = float(entry - (2.0 * atr))
+            # Combine ATR volatility buffer with local swing low market structure
+            local_support = ltf["low"].iloc[-4:-1].min()
+            sl = float(min(entry - (1.5 * atr), local_support - (0.2 * atr)))
+            
             risk_dist = entry - sl
-            tp = entry + (risk_dist * rr_ratio)
+            if risk_dist <= 0:
+                return None
+                
+            tp = float(entry + (risk_dist * rr_ratio))
+            
             return TradeSignal(
                 symbol=symbol,
                 side="LONG",
                 entry_price=entry,
                 stop_loss=sl,
                 take_profit=tp,
-                reason=f"24H Breakout LONG (ADX {c_prev['adx']:.1f})"
+                reason=f"Smart Breakout LONG (Score {score}/5, ADX {c_prev['adx']:.1f})"
             )
 
-    # BEARISH MOMENTUM BREAKOUT:
-    # 1H candle closes decisively below 24-hour low with strong volume surge
-    if htf_bearish:
-        breakout_down = c_prev["close"] < c_prev["donchian_low"]
-        strong_body = c_prev["close"] < c_prev["open"]
-        volume_surge = c_prev["volume"] > (c_prev["vol_ma"] * 1.4)
+    # ==========================
+    # BEARISH SETUP (SHORT)
+    # ==========================
+    if htf_bearish and c_prev["adx"] > 20:
+        score = 0
+        if c_prev["close"] < c_prev["donchian_low"]: score += 2
+        if c_prev["close"] < c_prev["open"]: score += 1
+        if c_prev["volume"] > (c_prev["vol_ma"] * 1.2): score += 1
+        if c_prev["adx"] > 25: score += 1
 
-        if breakout_down and strong_body and volume_surge:
+        if score >= 3:
             entry = float(c_curr["close"])
-            sl = float(entry + (2.0 * atr))
+            # Combine ATR volatility buffer with local swing high market structure
+            local_resistance = ltf["high"].iloc[-4:-1].max()
+            sl = float(max(entry + (1.5 * atr), local_resistance + (0.2 * atr)))
+            
             risk_dist = sl - entry
-            tp = entry - (risk_dist * rr_ratio)
+            if risk_dist <= 0:
+                return None
+                
+            tp = float(entry - (risk_dist * rr_ratio))
+            
             return TradeSignal(
                 symbol=symbol,
                 side="SHORT",
                 entry_price=entry,
                 stop_loss=sl,
                 take_profit=tp,
-                reason=f"24H Breakdown SHORT (ADX {c_prev['adx']:.1f})"
+                reason=f"Smart Breakdown SHORT (Score {score}/5, ADX {c_prev['adx']:.1f})"
             )
 
     return None

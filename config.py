@@ -9,8 +9,7 @@ load_dotenv()
 @dataclass
 class BotConfig:
     exchange_id: str = "bybit"
-    paper_trading: bool = True    # Keep True for paper soak test; set False for testnet/live orders
-    use_testnet: bool = os.getenv("USE_TESTNET", "true").lower() == "true"
+    paper_trading: bool = True    # Default fallback; overridden by persisted UI mode in alphastrike.db
 
     # API Credentials loaded safely from .env
     api_key: str = os.getenv("BYBIT_API_KEY", "")
